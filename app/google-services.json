@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "380706018682",
+    "project_id": "sahmride-d9877",
+    "storage_bucket": "sahmride-d9877.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:380706018682:android:05327df7d60cc5831c72c3",
+        "android_client_info": {
+          "package_name": "com.simpdev.sahmride"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "380706018682-2r8k0uikpiq01kd6etsu93oep6he0vhm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsDStrKObDauGHO5qhLhUtO3pQNDp8AdU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "380706018682-2r8k0uikpiq01kd6etsu93oep6he0vhm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

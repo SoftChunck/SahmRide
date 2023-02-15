@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">SahmRide</string>
+    <string name="title_activity_sign_in">SahmRide</string>
+    <string name="title_activity_sign_up">SignUp</string>
+    <string name="title_activity_home">Home</string>
+    <string name="mapbox_access_token">pk.eyJ1Ijoic29mdGNodW5jayIsImEiOiJjbGFkcmR6bHAwbW9oM3VtaGNpb3lpbDQ4In0.3mzCh9e8kmyv_MCZIpHO5w</string>
+    <string name="title_activity_map_view">MapView</string>
+    <string name="title_activity_pick_up">PickUp</string>
+    <string name="title_activity_destination">Destination</string>
+    <string name="title_activity_route_info">RouteInfo</string>
+    <string name="title_activity_logged_in">LoggedIn</string>
+    <string name="title_activity_forgot_password">ForgotPassword</string>
+</resources>
