@@ -6,5 +6,6 @@ sealed class SigninEvents{
     object viewPasswordChange: SigninEvents()
     object SigninClicked: SigninEvents()
     object SignupClicked: SigninEvents()
+    object LoginErrorNull: SigninEvents()
     object ForgotPasswordClicked: SigninEvents()
 }

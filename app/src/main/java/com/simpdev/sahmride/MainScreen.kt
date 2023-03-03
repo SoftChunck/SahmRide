@@ -28,7 +28,6 @@ import com.simpdev.sahmride.Presentation.SignUp.SignUpUI
 class MainScreen : ComponentActivity() {
 
     var locationAccessGranted = false
-    private val LocationCallback = LocationListeningCallback(this)
     val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -60,7 +59,10 @@ class MainScreen : ComponentActivity() {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier
-                        .scrollable(state = rememberScrollState(0), orientation = Orientation.Vertical)
+                        .scrollable(
+                            state = rememberScrollState(0),
+                            orientation = Orientation.Vertical
+                        )
                         .fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 )
@@ -76,9 +78,11 @@ class MainScreen : ComponentActivity() {
 
                         if(auth.currentUser != null)
                         {
-                            viewModel.onEvent(MainScreenEvents.ChangeScreen(CurrentScreen.HomeScreen))
-                            if(auth.currentUser == null)
+                            if(auth.currentUser?.isEmailVerified == true)
                             {
+                                viewModel.onEvent(MainScreenEvents.ChangeScreen(CurrentScreen.HomeScreen))
+                            }
+                            else{
                                 viewModel.onEvent(MainScreenEvents.ChangeScreen(CurrentScreen.SignIn))
                             }
                         }
@@ -95,7 +99,7 @@ class MainScreen : ComponentActivity() {
                             ForgotPasswordUI(mainScreenViewModel = viewModel)
                         }
                         is CurrentScreen.HomeScreen -> {
-                            Navigation(LocalContext.current,LocationCallback)
+                            Navigation(LocalContext.current)
                         }
                     }
                 }

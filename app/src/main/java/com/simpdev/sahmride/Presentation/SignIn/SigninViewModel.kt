@@ -36,6 +36,9 @@ class SigninViewModel(
             is SigninEvents.SigninClicked -> {
                 checkForErrorsAndSubmit()
             }
+            is SigninEvents.LoginErrorNull -> {
+                state = state.copy(loginError = null)
+            }
             is SigninEvents.SignupClicked -> {
 
             }

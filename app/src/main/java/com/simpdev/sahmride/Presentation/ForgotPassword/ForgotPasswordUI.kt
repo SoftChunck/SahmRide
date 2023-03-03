@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MarkEmailRead
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -118,17 +118,27 @@ fun ForgotPasswordUI(mainScreenViewModel: MainScreenViewModel){
             verticalArrangement = Arrangement.Bottom) {
             if(state.emailSent)
             {
-                Snackbar(
-                    action = {
-                        IconButton(onClick = {
-                            viewModel.onEvent(ForgotPasswordEvents.emailSentChange(false))
-                        }) {
-                            Icon(Icons.Filled.Close, contentDescription = "")
+                AlertDialog(
+                    onDismissRequest = {
+
+                    },
+                    icon = { Icon(Icons.Filled.MarkEmailRead, contentDescription = null) },
+                    title = {
+                        Text(text = "Email Sent")
+                    },
+                    text = {
+                        Text(text = "Reset Email Sent, Check your email to reset password")
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                mainScreenViewModel.onEvent(MainScreenEvents.ChangeScreen(CurrentScreen.SignIn))
+                            }
+                        ) {
+                            Text("Sign In")
                         }
-                    }
-                ){
-                    Text(text = "Reset Email Sent")
-                }
+                    },
+                )
             }
         }
     }

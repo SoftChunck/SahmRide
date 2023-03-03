@@ -9,10 +9,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -50,6 +47,7 @@ fun SignInUI(mainScreenViewModel: MainScreenViewModel) {
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.CenterHorizontally,
     ){
+
         Image(
             painterResource(id = R.drawable.sahmlogo),
             contentDescription = "",
@@ -61,9 +59,33 @@ fun SignInUI(mainScreenViewModel: MainScreenViewModel) {
         )
         if (state.loginError != null) {
             Text(
-                text = state.loginError,
+                text = state.loginError!!,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium
+            )
+        }
+        if(state.loginError == "Email not Verified, Verification Email Sent")
+        {
+            AlertDialog(
+                onDismissRequest = {
+
+                },
+                icon = { Icon(Icons.Filled.Error, contentDescription = null) },
+                title = {
+                    Text(text = "Email Not Verified")
+                },
+                text = {
+                    Text(text = "Verification email sent, check your email for verification..")
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.onEvent(SigninEvents.LoginErrorNull)
+                        }
+                    ) {
+                        Text("Close")
+                    }
+                },
             )
         }
         Spacer(modifier = Modifier

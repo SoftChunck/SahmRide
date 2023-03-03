@@ -7,7 +7,7 @@ data class SigninState(
     val password:String = "",
     val emailError:String? = null,
     val passwordError:String? = null,
-    val loginError:String? = null,
+    var loginError:String? = null,
     val viewPassword:Boolean = false,
     val signedInSuccessful:Boolean = false,
     val signingIn:Boolean = false,

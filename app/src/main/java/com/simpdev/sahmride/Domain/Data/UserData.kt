@@ -8,7 +8,7 @@ data class UserData(
     var lastName:String? = null,
     var email:String? = null,
     var gender:String? = null,
-    var active:Boolean = true,
+    var active:Boolean = false,
     var profilePic: Uri? = null,
     var isDriver: Boolean = false,
     var profilePicBitmap: ImageBitmap? = null

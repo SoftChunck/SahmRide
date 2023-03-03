@@ -147,7 +147,7 @@ class UserProfileViewModel(
             is UserProfileEvent.vehicleModelChange -> {
                 var prevModel = state.vehicleModel
                 state = state.copy(vehicleModel = event.vehicleModelChange)
-                if(state.vehicleModel?.length ?: 0  >= 14)
+                if(state.vehicleModel?.length ?: 0  >= 14 || !(state.vehicleModel.any { it.isDigit() }))
                 {
                     state = state.copy(vehicleModel = prevModel)
                 }

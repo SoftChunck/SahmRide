@@ -1,6 +1,7 @@
 package Domain.Data
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -17,16 +18,18 @@ import com.mapbox.maps.EdgeInsets
 import com.mapbox.maps.MapView
 import com.mapbox.maps.plugin.animation.MapAnimationOptions
 import com.mapbox.maps.plugin.animation.flyTo
-import com.mapbox.maps.plugin.annotation.annotations
+import com.mapbox.maps.plugin.annotation.generated.CircleAnnotationManager
 import com.mapbox.maps.plugin.annotation.generated.CircleAnnotationOptions
-import com.mapbox.maps.plugin.annotation.generated.createCircleAnnotationManager
 import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.maps.plugin.viewport.data.FollowPuckViewportStateBearing
 import com.mapbox.maps.plugin.viewport.data.FollowPuckViewportStateOptions
 import com.mapbox.maps.plugin.viewport.viewport
+import com.simpdev.sahmride.BackgroundServices.LocationBroadcastService
 import com.simpdev.sahmride.Domain.Data.UserData
+import com.simpdev.sahmride.Domain.RideDetails
 import com.simpdev.sahmride.R
 import java.io.File
+
 
 var userData: UserData = UserData()
 var auth = Firebase.auth
@@ -35,6 +38,13 @@ val database = Firebase.database
 val storageRef = Firebase.storage.reference;
 var context:Context? = null
 var pathToProfilePic:String? = null
+var currentRideDetails: RideDetails = RideDetails()
+var driverCurrentLocation:Point? = null
+var driverUid:String? = null
+var circleAnnotationManager:CircleAnnotationManager? = null
+
+val priceOfFule:Double = 280.0
+val fulePerKm:Double = 0.4
 
 fun trackCurrentLocation(mapView: MapView, density:Float){
     mapView.location.updateSettings {
@@ -60,7 +70,7 @@ fun flytoLocation(mapView: MapView, coordinates: Point?){
     )
 }
 fun drawCircularAnnotation(mapView: MapView, coordinates: Point){
-    mapView.annotations.createCircleAnnotationManager().create(
+    circleAnnotationManager?.create(
         CircleAnnotationOptions()
             .withPoint(Point.fromLngLat(coordinates.longitude(),coordinates.latitude()))
             .withCircleRadius(8.0)
@@ -106,12 +116,35 @@ fun saveUserDataToFile(firstName:String,lastName:String,email:String,gender:Stri
         Log.d("Data saved","User Data saved to file")
     }
 }
+//fun updateActiveStatus(active:Boolean){
+//    val sharedPreference = context?.getSharedPreferences("userData",Context.MODE_PRIVATE)
+//    var editor = sharedPreference?.edit()
+//    if(editor != null){
+//        editor.putBoolean("active", active)
+//        editor.commit()
+//        Log.d("Active Updated","User Data saved to file")
+//    }
+//}
 
+fun checkActiveStatus(): Boolean {
+    val sharedPreference = context?.getSharedPreferences("userData",Context.MODE_PRIVATE)
+    Log.d("Active Updated", (sharedPreference?.getBoolean("active",false) == false).toString())
+    return sharedPreference?.getBoolean("active",false) == true
+}
 fun readUserDataToFile(){
     val sharedPreference = context?.getSharedPreferences("userData",Context.MODE_PRIVATE)
     userData.firstName = sharedPreference?.getString("firstName",null)
     userData.lastName = sharedPreference?.getString("lastName",null)
     userData.email = sharedPreference?.getString("email",null)
     userData.gender = sharedPreference?.getString("gender",null)
-    userData.isDriver = sharedPreference?.getBoolean("isDriver",false) == false
+    userData.isDriver = sharedPreference?.getBoolean("isDriver",false) == true
+    userData.active = sharedPreference?.getBoolean("active",false) == true
 }
+
+//Start LocationBroadcastService
+fun startLocationBroadcastService(){
+    val startLocationService = Intent(context,LocationBroadcastService::class.java)
+    context?.startService(startLocationService)
+    Log.d("Services Start","Services Start")
+}
+

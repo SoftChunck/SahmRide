@@ -13,6 +13,7 @@
         android:theme="@style/Theme.SahmRide"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        <service  android:name="com.simpdev.sahmride.BackgroundServices.LocationBroadcastService"/>
         <activity
             android:name=".MainScreen"
             android:windowSoftInputMode="adjustPan"

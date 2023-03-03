@@ -9,10 +9,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -51,6 +48,30 @@ fun SignUpUI(mainScreenViewModel: MainScreenViewModel) {
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally,
         ){
+            if(state.accountCreated)
+            {
+                AlertDialog(
+                    onDismissRequest = {
+
+                    },
+                    icon = { Icon(Icons.Filled.MarkEmailRead, contentDescription = null) },
+                    title = {
+                        Text(text = "Account Created")
+                    },
+                    text = {
+                        Text(text = "Verification email sent, check your email to verify")
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                mainScreenViewModel.onEvent(MainScreenEvents.ChangeScreen(CurrentScreen.SignIn))
+                            }
+                        ) {
+                            Text("SignIn")
+                        }
+                    },
+                )
+            }
             Image(
                 painterResource(id = R.drawable.sahmlogo),
                 contentDescription = "",
@@ -66,17 +87,6 @@ fun SignUpUI(mainScreenViewModel: MainScreenViewModel) {
                 Text(
                     text = state.errorMsg,
                     color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                )
-            }
-            if(state.accountCreated)
-            {
-                Text(
-                    text = " Account Created, Verify Your Email to Signin",
-                    color = Color.Green,
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
