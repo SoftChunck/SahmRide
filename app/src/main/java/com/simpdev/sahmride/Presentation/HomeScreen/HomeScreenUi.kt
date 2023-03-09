@@ -2,7 +2,9 @@ package com.simpdev.sahmride.Presentation.HomeScreen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CarRental
 import androidx.compose.material.icons.filled.History
@@ -12,12 +14,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.simpdev.sahmride.Presentation.Navigation.NavigationEvent
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,12 +30,14 @@ fun HomeScreenUi(navController: NavController)
 {
     val viewModel = viewModel<HomeScreenViewModel>()
     val state = viewModel.state
-
     
     LaunchedEffect(key1 = 1){
         viewModel.checkDriverStatus()
     }
-    Column(){
+    Column(
+        modifier = Modifier
+            .verticalScroll(enabled = true, state = rememberScrollState())
+    ){
 
         if(state.isDriver)
             Column(
@@ -112,11 +118,33 @@ fun HomeScreenUi(navController: NavController)
                             onClick = { viewModel.onEvent(HomeScreenEvents.availableSeatsChange("5"))  })
                     }
                 }
-                Row( modifier = Modifier) {
-
-                }
             }
-
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 20.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = RoundedCornerShape(20.dp)
+                ),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp, vertical = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Text(
+                    text = "Ride Sharing",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 20.sp
+                )
+                Switch(checked = state.rideSharing, onCheckedChange = {
+                    viewModel.onEvent(HomeScreenEvents.rideSharingChange)
+                })
+            }
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth(),
@@ -124,7 +152,9 @@ fun HomeScreenUi(navController: NavController)
         ) {
 
             ElevatedCard(
-                onClick = {}
+                onClick = {
+                    navController.navigate(NavigationEvent.RideScreen.route)
+                }
             ) {
                 Column(modifier = Modifier
                     .padding(20.dp),
@@ -164,8 +194,7 @@ fun HomeScreenUi(navController: NavController)
                 .background(
                     color = MaterialTheme.colorScheme.primaryContainer,
                     shape = RoundedCornerShape(20.dp)
-                ),
-            
+                )
         ){
             Row (
                 modifier = Modifier
@@ -179,6 +208,47 @@ fun HomeScreenUi(navController: NavController)
                     fontSize = 20.sp
                 )
                 Icon(imageVector = Icons.Filled.History, contentDescription = null)
+            }
+            Divider(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 70.dp)
+            )
+            if(state.fetchingRideDetails){
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            else {
+                state.historyList.forEach {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp, vertical = 10.dp),
+                    ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = it.dayData.toString(),
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(text = it.price.toString())
+                    }
+                    Text(
+                        modifier = Modifier
+                            .padding(horizontal = 10.dp),
+                        text = "${it.distance}km ${it.duration}",
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                }
             }
 
         }

@@ -85,7 +85,7 @@ fun ChatUi(
                                 .height(50.dp)
                                 .clip(shape = CircleShape),
                             contentScale = ContentScale.Crop,
-                            bitmap = userInfo.userPic,
+                            bitmap = userInfo.userPic!!,
                             contentDescription = null,
                         )
                     }

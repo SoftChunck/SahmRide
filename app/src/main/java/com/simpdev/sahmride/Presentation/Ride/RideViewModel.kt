@@ -11,12 +11,11 @@ class RideViewModel: ViewModel()
 
     fun onEvent(event: RideEvent){
         when(event){
-            is RideEvent.currentRideScreenChange -> {
-                if (state.currentRideScreen == RideScreen.RideHome) {
-                    state = state.copy(currentRideScreen = RideScreen.TripScreen)
-                } else if (state.currentRideScreen == RideScreen.TripScreen) {
-                    state = state.copy(currentRideScreen = RideScreen.RideHome)
-                }
+            is RideEvent.changeCurrentRideScreen -> {
+                    state = state.copy(currentRideScreen = event.rideScreen)
+            }
+            is RideEvent.driverProfile -> {
+                state = state.copy(selectedDriverData = event.driverData, currentRideScreen = RideScreen.DriverProfileScreen)
             }
         }
     }

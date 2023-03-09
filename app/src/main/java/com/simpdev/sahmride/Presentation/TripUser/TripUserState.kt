@@ -9,4 +9,5 @@ data class TripUserState(
 sealed class TripUserScreen{
     object ChatScreen:TripUserScreen()
     object TripHome:TripUserScreen()
+    object ReviewScreen:TripUserScreen()
 }

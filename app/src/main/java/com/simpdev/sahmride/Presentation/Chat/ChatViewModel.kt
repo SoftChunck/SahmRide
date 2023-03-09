@@ -43,6 +43,7 @@ class ChatViewModel: ViewModel()
                     (if(event.userType == "Driver") event.userUid else auth.currentUser?.uid)!!
                 ).collection("messages").orderBy("timeStamp")
                 ref.addSnapshotListener { value, error ->
+                    state = state.copy()
                     if(error != null){
                         Log.d("Error","LISTINING TO MEssgaes Error")
                     }

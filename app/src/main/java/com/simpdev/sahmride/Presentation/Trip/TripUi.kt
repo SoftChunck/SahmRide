@@ -3,17 +3,27 @@ package com.simpdev.sahmride.Presentation.Trip
 import Domain.Data.*
 import android.content.Context
 import android.util.Log
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.Timeline
-import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
@@ -51,11 +61,12 @@ import com.mapbox.navigation.ui.tripprogress.model.EstimatedTimeToArrivalFormatt
 import com.mapbox.navigation.ui.tripprogress.model.TimeRemainingFormatter
 import com.mapbox.navigation.ui.tripprogress.model.TripProgressUpdateFormatter
 import com.simpdev.sahmride.*
+import com.simpdev.sahmride.Domain.RideDetails
 import com.simpdev.sahmride.Presentation.Chat.ChatUi
 import com.simpdev.sahmride.Presentation.Navigation.NavigationEvent
 import com.simpdev.sahmride.Presentation.Navigation.NavigationViewModel
-import com.simpdev.sahmride.Presentation.Navigation.userInfo
 import com.simpdev.sahmride.Presentation.Ride.RideEvent
+import com.simpdev.sahmride.Presentation.Ride.RideScreen
 import com.simpdev.sahmride.Presentation.Ride.RideViewModel
 import com.simpdev.sahmride.R
 import java.math.RoundingMode
@@ -69,12 +80,29 @@ fun TripUi(
     destination: Point?,
     userUids: List<String>,
     userType: String,
-    userInfo: userInfo,
     navigationViewModel: NavigationViewModel? = null,
-    rideViewModel: RideViewModel? = null
+    rideViewModel: RideViewModel? = null,
+    usersInfo: SnapshotStateList<RideDetails>,
 ){
     val viewModel = viewModel<TripViewModel>()
     val state = viewModel.state
+    LaunchedEffect(key1 = 1, block = {
+        state.waypoints = emptyList<Point>().toMutableList()
+        database.reference.child("driversLocation").child(auth.currentUser!!.uid).child("waypoints").orderByKey().get().addOnSuccessListener {
+            it.children.forEach {
+                state.waypoints.add(Point.fromLngLat((it.child("lng").value.toString()).toDouble(),(it.child("lat").value.toString()).toDouble()))
+            }
+            routeOptions = RouteOptions.builder()
+                .applyDefaultNavigationOptions(DirectionsCriteria.PROFILE_DRIVING_TRAFFIC)
+                .coordinatesList(
+                    state.waypoints
+                )
+                .build()
+
+            mapNav.requestRoutes(routeOptions,naivgationRouterCallback)
+        }
+
+    })
     val accessToken = stringResource(id = R.string.mapbox_access_token)
     val tripProgressFormatter: TripProgressUpdateFormatter by lazy {
         val distanceFormatterOptions =
@@ -92,13 +120,13 @@ fun TripUi(
     var distance by remember { mutableStateOf(0.0) }
     var duration  by remember { mutableStateOf(0.0) }
     //Route Line
+    Log.d("Pickup",pickup.toString())
+    Log.d("Destination",destination.toString())
     routeOptions = RouteOptions.builder()
         .applyDefaultNavigationOptions(DirectionsCriteria.PROFILE_DRIVING_TRAFFIC)
-        .coordinatesList(listOf(
-            driverCurrentLocation,
-            pickup,
-            destination
-        ))
+        .coordinatesList(
+            state.waypoints
+        )
         .build()
     customColorResources = RouteLineColorResources.Builder()
         .routeDefaultColor(android.graphics.Color.parseColor("#000000"))
@@ -172,6 +200,7 @@ fun TripUi(
         }
     
     LaunchedEffect(key1 = 1){
+        viewModel.listenForUsers(userUids[0])
         mapNav.registerRouteProgressObserver(routeProgressObserver)
         mapNav.registerRoutesObserver(routesObserver)
         mapNav.requestRoutes(routeOptions,naivgationRouterCallback)
@@ -188,12 +217,324 @@ fun TripUi(
 
 
     Log.d("Pickup",pickup?.latitude().toString())
-    Log.d("Pickup",destination?.latitude().toString())
+    Log.d("Destination",destination?.latitude().toString())
+    Log.d("DriverLocation", driverCurrentLocation?.latitude().toString())
 
+    if(state.usersAvalible){
+        state.rideSharingRideDetails.forEach {
+            if(it.request == "pending")
+            {
+                Column(
+                    modifier = Modifier
+                        .zIndex(7f)
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.Bottom
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.35f)
+                            .background(
+                                shape = RoundedCornerShape(
+                                    topStart = 25.dp,
+                                    topEnd = 25.dp
+                                ),
+                                color = MaterialTheme.colorScheme.secondaryContainer
+                            ),
+                        verticalArrangement = Arrangement.Top,
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            if(it.UserInfo.userPic != null)
+                                Image(
+                                    modifier = Modifier
+                                        .width(100.dp)
+                                        .height(100.dp)
+                                        .offset(25.dp, (-45).dp)
+                                        .clip(shape = CircleShape),
+                                    contentScale = ContentScale.Crop,
+                                    bitmap = it.UserInfo.userPic!!,
+                                    contentDescription = null
+                                )
+                            else
+                                Image(
+                                    modifier = Modifier
+                                        .width(100.dp)
+                                        .height(100.dp)
+                                        .offset(25.dp, (-45).dp)
+                                        .clip(shape = CircleShape),
+                                    contentScale = ContentScale.Crop,
+                                    painter = painterResource(id = R.drawable.man),
+                                    contentDescription = null,
+                                )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 20.dp)
+                                ,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontFamily = FontFamily.SansSerif,
+                                    fontSize = 3.8.em,
+                                    text = it.UserInfo.firstName+ " " + it.UserInfo.lastName
+                                )
+                                Row(
+                                    horizontalArrangement = Arrangement.End,
+                                ){
+                                    Icon(imageVector = if(it.UserInfo.gender == "Male") Icons.Filled.Male else Icons.Filled.Female, contentDescription = null, modifier = Modifier.size(20.dp),tint = MaterialTheme.colorScheme.secondary)
+                                    Text(text = it.UserInfo.gender.toString(), fontSize = 14.sp)
+                                }
+                            }
+                        }
+                        Column(
+                            modifier = Modifier
+                                .offset(0.dp,(-30.dp))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(horizontal = 20.dp)
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontFamily = FontFamily.SansSerif,
+                                    fontSize = 3.4.em,
+                                    text = "Pickup --- Destination"
+                                )
+                                Text(
+                                    style = MaterialTheme.typography.bodySmall,
+                                    text = it.distance +"km "+ it.duration
+                                )
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .padding(horizontal = 20.dp)
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontFamily = FontFamily.SansSerif,
+                                    fontSize = 3.4.em,
+                                    text = "CurrentLocation --- Pickup"
+                                )
+                                Text(
+                                    style = MaterialTheme.typography.bodySmall,
+                                    text =  it.distanceFromDriver + "km " + it.durationFromDriver
+                                )
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .padding(horizontal = 20.dp)
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontFamily = FontFamily.SansSerif,
+                                    fontSize = 4.em,
+                                    text = "Price"
+                                )
+                                Text(
+                                    style = MaterialTheme.typography.bodySmall,
+                                    text =  (it.distance!!.toDouble()  * priceOfFule * fulePerKm).roundToInt().toString() + " Rs"
+                                )
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .padding(top = 20.dp)
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                ElevatedButton(onClick = {
+                                    viewModel.onEvent(TripEvents.userRejected)
+                                }) {
+                                    Text(text = "Reject")
+                                }
+                                Button(onClick = {
+                                    db.collection("ridesDetail").document(it.UserInfo.userUid!!)
+                                        .update("request","accepted").addOnSuccessListener {
+                                            Log.d("request","Accepted")
+                                        }
+                                    it.request = "accepted"
+                                    viewModel.onEvent(TripEvents.userAccepted(it.distance))
+                                }) {
+                                    Text(text = "Accept")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+//        Column(
+//            modifier = Modifier
+//                .zIndex(7f)
+//                .fillMaxSize(),
+//            verticalArrangement = Arrangement.Bottom
+//        ) {
+//            Column(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .fillMaxHeight(0.35f)
+//                    .background(
+//                        shape = RoundedCornerShape(
+//                            topStart = 25.dp,
+//                            topEnd = 25.dp
+//                        ),
+//                        color = MaterialTheme.colorScheme.secondaryContainer
+//                    ),
+//                verticalArrangement = if(state.loadingUserProfile) Arrangement.Center else Arrangement.Top,
+//                horizontalAlignment = if(state.loadingUserProfile) Alignment.CenterHorizontally else Alignment.Start
+//            ) {
+//                if(state.loadingUserProfile)
+//                {
+//                    CircularProgressIndicator()
+//                }
+//                else
+//                {
+//                    Row(
+//                        modifier = Modifier
+//                            .fillMaxWidth(),
+//                        horizontalArrangement = Arrangement.SpaceBetween
+//                    ) {
+//                        if(state.userPic != null)
+//                            Image(
+//                                modifier = Modifier
+//                                    .width(100.dp)
+//                                    .height(100.dp)
+//                                    .offset(25.dp, (-45).dp)
+//                                    .clip(shape = CircleShape),
+//                                contentScale = ContentScale.Crop,
+//                                bitmap = state.userPic!!,
+//                                contentDescription = null
+//                            )
+//                        else
+//                            Image(
+//                                modifier = Modifier
+//                                    .width(100.dp)
+//                                    .height(100.dp)
+//                                    .offset(25.dp, (-45).dp)
+//                                    .clip(shape = CircleShape),
+//                                contentScale = ContentScale.Crop,
+//                                painter = painterResource(id = R.drawable.man),
+//                                contentDescription = null,
+//                            )
+//                        Column(
+//                            modifier = Modifier
+//                                .fillMaxWidth()
+//                                .padding(top = 20.dp)
+//                            ,
+//                            horizontalAlignment = Alignment.CenterHorizontally
+//                        ) {
+//                            Text(
+//                                fontWeight = FontWeight.SemiBold,
+//                                fontFamily = FontFamily.SansSerif,
+//                                fontSize = 3.8.em,
+//                                text = state.firstName+ " " + state.lastName
+//                            )
+//                            Row(
+//                                horizontalArrangement = Arrangement.End,
+//                            ){
+//                                Icon(imageVector = if(state.gender == "Male") Icons.Filled.Male else Icons.Filled.Female, contentDescription = null, modifier = Modifier.size(20.dp),tint = MaterialTheme.colorScheme.secondary)
+//                                Text(text = state.gender.toString(), fontSize = 14.sp)
+//                            }
+//                        }
+//                    }
+//                    Column(
+//                        modifier = Modifier
+//                            .offset(0.dp,(-30.dp))
+//                    ) {
+//                        Row(
+//                            modifier = Modifier
+//                                .padding(horizontal = 20.dp)
+//                                .fillMaxWidth(),
+//                            horizontalArrangement = Arrangement.SpaceBetween
+//                        ) {
+//                            Text(
+//                                fontWeight = FontWeight.SemiBold,
+//                                fontFamily = FontFamily.SansSerif,
+//                                fontSize = 3.4.em,
+//                                text = "Pickup --- Destination"
+//                            )
+//                            Text(
+//                                style = MaterialTheme.typography.bodySmall,
+//                                text = state.distance +"km "+ state.duration
+//                            )
+//                        }
+//                        Row(
+//                            modifier = Modifier
+//                                .padding(horizontal = 20.dp)
+//                                .fillMaxWidth(),
+//                            horizontalArrangement = Arrangement.SpaceBetween
+//                        ) {
+//                            Text(
+//                                fontWeight = FontWeight.SemiBold,
+//                                fontFamily = FontFamily.SansSerif,
+//                                fontSize = 3.4.em,
+//                                text = "CurrentLocation --- Pickup"
+//                            )
+//                            Text(
+//                                style = MaterialTheme.typography.bodySmall,
+//                                text =  state.distanceFromDriver + "km " + state.durationFromDriver
+//                            )
+//                        }
+//                        Row(
+//                            modifier = Modifier
+//                                .padding(horizontal = 20.dp)
+//                                .fillMaxWidth(),
+//                            horizontalArrangement = Arrangement.SpaceBetween
+//                        ) {
+//                            Text(
+//                                fontWeight = FontWeight.SemiBold,
+//                                fontFamily = FontFamily.SansSerif,
+//                                fontSize = 4.em,
+//                                text = "Price"
+//                            )
+//                            Text(
+//                                style = MaterialTheme.typography.bodySmall,
+//                                text =  (state.distance!!.toDouble()  * priceOfFule * fulePerKm).roundToInt().toString() + " Rs"
+//                            )
+//                        }
+//                        Row(
+//                            modifier = Modifier
+//                                .padding(top = 20.dp)
+//                                .fillMaxWidth(),
+//                            horizontalArrangement = Arrangement.SpaceEvenly
+//                        ) {
+//                            ElevatedButton(onClick = {
+//                                viewModel.onEvent(TripEvents.userRejected)
+//                            }) {
+//                                Text(text = "Reject")
+//                            }
+//                            Button(onClick = {
+//                                db.collection("ridesDetail").document(state.userUid!!)
+//                                    .update("request","accepted").addOnSuccessListener {
+//                                        Log.d("request","Accepted")
+//                                    }
+//
+//                                viewModel.onEvent(TripEvents.userAccepted)
+//                            }) {
+//                                Text(text = "Accept")
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+    }
     when(state.currentScreen)
     {
         is TripScreen.ChatScreen -> {
-            ChatUi(tripViewModel = viewModel, userUids = userUids,userType = userType, tripUserViewModel = null,userInfo = userInfo)
+            ChatUi(tripViewModel = viewModel, userUids = userUids,userType = userType, tripUserViewModel = null,userInfo = usersInfo[0].UserInfo)
         }
         is TripScreen.TripHome -> {
             Box {
@@ -210,8 +551,6 @@ fun TripUi(
                                     }
                                 }
                             }
-                            if (pickup != null) drawCircularAnnotation(mapView!!, pickup)
-                            if (destination != null) drawCircularAnnotation(mapView!!, destination)
                             mapNav = MapboxNavigation(
                                 NavigationOptions.Builder(it)
                                     .accessToken(accessToken)
@@ -221,6 +560,9 @@ fun TripUi(
 
                             mapNav.requestRoutes(routeOptions,naivgationRouterCallback)
                             mapView?.let { flytoLocation(it, driverCurrentLocation) }
+
+                            if (pickup != null) drawCircularAnnotation(mapView!!, pickup)
+                            if (destination != null) drawCircularAnnotation(mapView!!, destination)
                         }
                         displayDensity = it.resources.displayMetrics.density
                         mapView!!
@@ -296,10 +638,10 @@ fun TripUi(
                                 .update("request","cancelled").addOnSuccessListener {
                                     Log.d("request","cancelled")
                                 }
-                            val ref = database.reference.child("driversLocation").child(auth.currentUser!!.uid).child("users")
+                            val ref = database.reference.child("driversLocation").child(auth.currentUser!!.uid).child("users").child(userUids[0].toString())
                             ref.setValue(null)
                             navigationViewModel?.onEvent(NavigationEvent.rideCancelled)
-                            rideViewModel?.onEvent(RideEvent.currentRideScreenChange)
+                            rideViewModel?.onEvent(RideEvent.changeCurrentRideScreen(RideScreen.RideHome))
 
                         }
                     ){

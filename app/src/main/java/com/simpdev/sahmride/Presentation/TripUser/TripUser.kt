@@ -55,6 +55,7 @@ import com.simpdev.sahmride.Presentation.Chat.ChatUi
 import com.simpdev.sahmride.Presentation.Navigation.NavigationEvent
 import com.simpdev.sahmride.Presentation.Navigation.NavigationViewModel
 import com.simpdev.sahmride.Presentation.Navigation.userInfo
+import com.simpdev.sahmride.Presentation.Review.ReviewUi
 import com.simpdev.sahmride.Presentation.Trip.TripUserEvents
 import com.simpdev.sahmride.Presentation.Trip.TripUserScreen
 import com.simpdev.sahmride.Presentation.Trip.TripUserViewModel
@@ -70,8 +71,9 @@ fun TripUser(
     destination: Point?,
     userUids: List<String>,
     userType: String,
-    userInfo: userInfo,
     navigationViewModel: NavigationViewModel,
+    usersInfo: MutableList<userInfo>,
+    waypoints: MutableList<Point>,
 ){
     val viewModel = viewModel<TripUserViewModel>()
     val state = viewModel.state
@@ -99,12 +101,8 @@ fun TripUser(
     //Route Line
     routeOptions = RouteOptions.builder()
         .applyDefaultNavigationOptions(DirectionsCriteria.PROFILE_DRIVING_TRAFFIC)
-        .coordinatesList(listOf(
-            driverCurrentLocation,
-            pickup,
-            destination
-        ))
-        .waypointNamesList(listOf("Driver", "Pickup", "Destination"))
+        .coordinatesList(waypoints)
+//        .waypointNamesList(listOf("Driver", "Pickup", "Destination"))
         .build()
     customColorResources = RouteLineColorResources.Builder()
         .routeDefaultColor(android.graphics.Color.parseColor("#FF0000"))
@@ -188,13 +186,20 @@ fun TripUser(
 
     when(state.currentScreen)
     {
+        is TripUserScreen.ReviewScreen -> {
+            viewModel.saveRideDetailsToHistory()
+            ReviewUi(
+                usersInfo[0],
+                navigationViewModel
+            )
+        }
         is TripUserScreen.ChatScreen -> {
             ChatUi(
                 tripViewModel = null,
                 tripUserViewModel = viewModel,
                 userUids = userUids,
                 userType = userType,
-                userInfo = userInfo
+                userInfo = usersInfo[0]
             )
         }
         is TripUserScreen.TripHome -> {
@@ -299,7 +304,8 @@ fun TripUser(
                                 .update("request","cancelled").addOnSuccessListener {
                                     Log.d("request","cancelled")
                                 }
-                            val ref = database.reference.child("driversLocation").child(userUids[0]!!).child("users")
+                            val ref = database.reference.child("driversLocation").child(userUids[0]!!).child("users").child(
+                                auth.currentUser!!.uid)
                             ref.setValue(null)
                             mapView?.onDestroy()
                             mapNav.onDestroy()

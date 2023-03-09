@@ -33,10 +33,10 @@ import com.simpdev.sahmride.Presentation.HomeScreen.HomeScreenUi
 import com.simpdev.sahmride.Presentation.Navigation.NavigationEvent
 import com.simpdev.sahmride.Presentation.Navigation.NavigationScreen
 import com.simpdev.sahmride.Presentation.Navigation.NavigationViewModel
-import com.simpdev.sahmride.Presentation.Navigation.userInfo
 import com.simpdev.sahmride.Presentation.Trip.TripUi
 import com.simpdev.sahmride.Presentation.TripUser.TripUser
 import com.simpdev.sahmride.Presentation.UserProfile.UserProfileUI
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,6 +56,10 @@ fun Navigation(
     }
     val navController = rememberNavController()
 
+    if(state.rideSharingRideDetails.size > 0 && state.rideSharingRideDetails.all { it.request == "accpted" })
+    {
+        viewModel.onEvent(NavigationEvent.changeCurrentScreen(NavigationScreen.RideAcceptedScreen))
+    }
     when(state.currentScreen){
         is NavigationScreen.WaitForRequest -> {
             Column(modifier = Modifier
@@ -123,17 +127,12 @@ fun Navigation(
             }
         }
         is NavigationScreen.RideAcceptedScreen -> {
-            Log.d("TripUser","Driver Accepted")
+            Log.d("TripDriver","Driver Accepted")
             TripUi(
                 context = context, pickup = state.pickup, destination = state.destination,
                 listOf<String>(state.userUid!!),
                 userType = "Driver",
-                userInfo = userInfo(
-                    firstName = state.firstName,
-                    lastName = state.lastName,
-                    userUid = state.userUid,
-                    userPic = state.userPic
-                ),
+                usersInfo = state.rideSharingRideDetails,
                 navigationViewModel = viewModel
             )
         }
@@ -143,12 +142,8 @@ fun Navigation(
             TripUser(context = context,pickup = state.pickup,destination = state.destination,
                 listOf<String>(state.userUid!!),
                 userType = "User",
-                userInfo = userInfo(
-                    firstName = state.firstName,
-                    lastName = state.lastName,
-                    userUid = state.userUid,
-                    userPic = state.userPic
-                ),
+                usersInfo = state.rideSharingUsers,
+                waypoints = state.waypoints,
                 navigationViewModel = viewModel,
             )
         }
@@ -200,168 +195,170 @@ fun Navigation(
                 }
             }) {
                 val innerPadding = it
-                if(state.usersAvalible && !state.userAccepted && (state.rideStatus == null || state.rideStatus == "cancelled") ){
-                    Column(
-                        modifier = Modifier
-                            .zIndex(7f)
-                            .fillMaxSize(),
-                        verticalArrangement = Arrangement.Bottom
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .fillMaxHeight(0.35f)
-                                .background(
-                                    shape = RoundedCornerShape(
-                                        topStart = 25.dp,
-                                        topEnd = 25.dp
-                                    ),
-                                    color = MaterialTheme.colorScheme.secondaryContainer
-                                ),
-                            verticalArrangement = if(state.loadingUserProfile) Arrangement.Center else Arrangement.Top,
-                            horizontalAlignment = if(state.loadingUserProfile) Alignment.CenterHorizontally else Alignment.Start
-                        ) {
-                            if(state.loadingUserProfile)
-                            {
-                                CircularProgressIndicator()
-                            }
-                            else
-                            {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    if(state.userPic != null)
-                                        Image(
-                                            modifier = Modifier
-                                                .width(100.dp)
-                                                .height(100.dp)
-                                                .offset(25.dp, (-45).dp)
-                                                .clip(shape = CircleShape),
-                                            contentScale = ContentScale.Crop,
-                                            bitmap = state.userPic!!,
-                                            contentDescription = null
-                                        )
-                                    else
-                                        Image(
-                                            modifier = Modifier
-                                                .width(100.dp)
-                                                .height(100.dp)
-                                                .offset(25.dp, (-45).dp)
-                                                .clip(shape = CircleShape),
-                                            contentScale = ContentScale.Crop,
-                                            painter = painterResource(id = R.drawable.man),
-                                            contentDescription = null,
-                                        )
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 20.dp)
-                                        ,
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text(
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontFamily = FontFamily.SansSerif,
-                                            fontSize = 3.8.em,
-                                            text = state.firstName+ " " + state.lastName
-                                        )
-                                        Row(
-                                            horizontalArrangement = Arrangement.End,
-                                        ){
-                                            Icon(imageVector = Icons.Filled.Male, contentDescription = null, modifier = Modifier.size(20.dp),tint = MaterialTheme.colorScheme.secondary)
-                                            Text(text = "Male", fontSize = 14.sp)
-                                        }
-                                    }
-                                }
+//                if(state.usersAvalible && !state.userAccepted && (state.rideStatus == null || state.rideStatus == "cancelled") ){
+                if(state.usersAvalible)
+                    state.rideSharingRideDetails.forEach {
+                        if(it.request == "pending")
+                        {
+                            Column(
+                                modifier = Modifier
+                                    .zIndex(7f)
+                                    .fillMaxSize(),
+                                verticalArrangement = Arrangement.Bottom
+                            ) {
                                 Column(
                                     modifier = Modifier
-                                        .offset(0.dp,(-30.dp))
+                                        .fillMaxWidth()
+                                        .fillMaxHeight(0.35f)
+                                        .background(
+                                            shape = RoundedCornerShape(
+                                                topStart = 25.dp,
+                                                topEnd = 25.dp
+                                            ),
+                                            color = MaterialTheme.colorScheme.secondaryContainer
+                                        ),
+                                    verticalArrangement = Arrangement.Top,
+                                    horizontalAlignment = Alignment.Start
                                 ) {
                                     Row(
                                         modifier = Modifier
-                                            .padding(horizontal = 20.dp)
                                             .fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        Text(
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontFamily = FontFamily.SansSerif,
-                                            fontSize = 3.4.em,
-                                            text = "Pickup --- Destination"
-                                        )
-                                        Text(
-                                            style = MaterialTheme.typography.bodySmall,
-                                            text = state.distance +"km "+ state.duration
-                                        )
-                                    }
-                                    Row(
-                                        modifier = Modifier
-                                            .padding(horizontal = 20.dp)
-                                            .fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontFamily = FontFamily.SansSerif,
-                                            fontSize = 3.4.em,
-                                            text = "CurrentLocation --- Pickup"
-                                        )
-                                        Text(
-                                            style = MaterialTheme.typography.bodySmall,
-                                            text =  state.distanceFromDriver + "km " + state.durationFromDriver
-                                        )
-                                    }
-                                    Row(
-                                        modifier = Modifier
-                                            .padding(horizontal = 20.dp)
-                                            .fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontFamily = FontFamily.SansSerif,
-                                            fontSize = 4.em,
-                                            text = "Price"
-                                        )
-                                        Text(
-                                            style = MaterialTheme.typography.bodySmall,
-                                            text =  (state.distance!!.toDouble()  * priceOfFule * fulePerKm).toString() + " Rs"
-                                        )
-                                    }
-                                    Row(
-                                        modifier = Modifier
-                                            .padding(top = 20.dp)
-                                            .fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceEvenly
-                                    ) {
-                                        ElevatedButton(onClick = {
-                                            viewModel.onEvent(NavigationEvent.userRejected)
-                                        }) {
-                                            Text(text = "Reject")
+                                        if(it.UserInfo.userPic != null)
+                                            Image(
+                                                modifier = Modifier
+                                                    .width(100.dp)
+                                                    .height(100.dp)
+                                                    .offset(25.dp, (-45).dp)
+                                                    .clip(shape = CircleShape),
+                                                contentScale = ContentScale.Crop,
+                                                bitmap = it.UserInfo.userPic!!,
+                                                contentDescription = null
+                                            )
+                                        else
+                                            Image(
+                                                modifier = Modifier
+                                                    .width(100.dp)
+                                                    .height(100.dp)
+                                                    .offset(25.dp, (-45).dp)
+                                                    .clip(shape = CircleShape),
+                                                contentScale = ContentScale.Crop,
+                                                painter = painterResource(id = R.drawable.man),
+                                                contentDescription = null,
+                                            )
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(top = 20.dp)
+                                            ,
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontFamily = FontFamily.SansSerif,
+                                                fontSize = 3.8.em,
+                                                text = it.UserInfo.firstName+ " " + it.UserInfo.lastName
+                                            )
+                                            Row(
+                                                horizontalArrangement = Arrangement.End,
+                                            ){
+                                                Icon(imageVector = if(it.UserInfo.gender == "Male") Icons.Filled.Male else Icons.Filled.Female, contentDescription = null, modifier = Modifier.size(20.dp),tint = MaterialTheme.colorScheme.secondary)
+                                                Text(text = it.UserInfo.gender.toString(), fontSize = 14.sp)
+                                            }
                                         }
-                                        Button(onClick = {
-                                            db.collection("ridesDetail").document(state.userUid!!)
-                                                .update("request","accepted").addOnSuccessListener {
-                                                    Log.d("request","Accepted")
-                                                }
-                                            viewModel.onEvent(NavigationEvent.userAccepted)
-                                        }) {
-                                            Text(text = "Accept")
+                                    }
+                                    Column(
+                                        modifier = Modifier
+                                            .offset(0.dp,(-30.dp))
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .padding(horizontal = 20.dp)
+                                                .fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontFamily = FontFamily.SansSerif,
+                                                fontSize = 3.4.em,
+                                                text = "Pickup --- Destination"
+                                            )
+                                            Text(
+                                                style = MaterialTheme.typography.bodySmall,
+                                                text = it.distance +"km "+ it.duration
+                                            )
+                                        }
+                                        Row(
+                                            modifier = Modifier
+                                                .padding(horizontal = 20.dp)
+                                                .fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontFamily = FontFamily.SansSerif,
+                                                fontSize = 3.4.em,
+                                                text = "CurrentLocation --- Pickup"
+                                            )
+                                            Text(
+                                                style = MaterialTheme.typography.bodySmall,
+                                                text =  it.distanceFromDriver + "km " + it.durationFromDriver
+                                            )
+                                        }
+                                        Row(
+                                            modifier = Modifier
+                                                .padding(horizontal = 20.dp)
+                                                .fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontFamily = FontFamily.SansSerif,
+                                                fontSize = 4.em,
+                                                text = "Price"
+                                            )
+                                            Text(
+                                                style = MaterialTheme.typography.bodySmall,
+                                                text =  (it.distance!!.toDouble()  * priceOfFule * fulePerKm).roundToInt().toString() + " Rs"
+                                            )
+                                        }
+                                        Row(
+                                            modifier = Modifier
+                                                .padding(top = 20.dp)
+                                                .fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceEvenly
+                                        ) {
+                                            ElevatedButton(onClick = {
+                                                viewModel.onEvent(NavigationEvent.userRejected)
+                                            }) {
+                                                Text(text = "Reject")
+                                            }
+                                            Button(onClick = {
+                                                db.collection("ridesDetail").document(it.UserInfo.userUid!!)
+                                                    .update("request","accepted").addOnSuccessListener {
+                                                        Log.d("request","Accepted")
+                                                    }
+                                                it.request = "accepted"
+                                                viewModel.onEvent(NavigationEvent.userAccepted(it.distance))
+                                            }) {
+                                                Text(text = "Accept")
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                }
+//                }
+
+
                 NavHost(navController = navController, startDestination = NavigationEvent.MainScreen.route ){
                     composable(route = NavigationEvent.MainScreen.route){
                         HomeScreenUi(navController)
                     }
                     composable(route = NavigationEvent.RideScreen.route){
-                        Pickup(context,defaultSelectedIndex = if(pickupLocation == null) 1 else if(destinationLocation == null) 2 else 3,viewModel)
+                        Pickup(context,defaultSelectedIndex = if(pickupLocation == null) 1 else if(destinationLocation == null) 2 else 3,viewModel,innerPadding)
                     }
                     composable(route = NavigationEvent.ProfileScreen.route){
                         UserProfileUI(innerPadding = innerPadding)

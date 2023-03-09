@@ -107,7 +107,8 @@ class SignUpViewModel(
                             "firstName" to state.firstName,
                             "lastName" to state.lastName,
                             "gender" to state.genderList[state.selectedGender],
-                            "driver" to false
+                            "driver" to false,
+                            "rating" to 0
                         )
                         auth.currentUser?.uid?.let {
                             db.collection("users").document(it)

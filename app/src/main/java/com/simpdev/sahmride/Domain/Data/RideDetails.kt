@@ -1,13 +1,14 @@
 package com.simpdev.sahmride.Domain
 
-import androidx.compose.ui.graphics.ImageBitmap
 import com.mapbox.geojson.Point
+import com.simpdev.sahmride.Presentation.Navigation.userInfo
 
 data class RideDetails(
-    val userUid:String? = null,
-    var firstName:String? = null,
-    var lastName:String? = null,
-    var gender:String? = null,
+    var UserInfo: userInfo = userInfo(),
+//    val userUid:String? = null,
+//    var firstName:String? = null,
+//    var lastName:String? = null,
+//    var gender:String? = null,
     val vehicleNumber:String? = null,
     var duration:String? = null,
     var distance:String? = null,
@@ -15,7 +16,8 @@ data class RideDetails(
     val rating:Int? = null,
     var pickup: Point? = null,
     var destination: Point? = null,
-    var userPic: ImageBitmap? = null,
+//    var userPic: ImageBitmap? = null,
     var distanceFromDriver:String? = null,
-    var durationFromDriver:String? = null
+    var durationFromDriver:String? = null,
+    var request:String? = null
 )
