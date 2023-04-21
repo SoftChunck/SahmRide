@@ -49,6 +49,7 @@ data class userInfo(
     var lastName:String? = null,
     var gender:String? = null,
     var userPic: ImageBitmap? = null,
+    var rating: Double = 0.0
 )
 
 sealed class NavigationScreen(){

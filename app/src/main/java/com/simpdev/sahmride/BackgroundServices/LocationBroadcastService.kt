@@ -1,16 +1,20 @@
 package com.simpdev.sahmride.BackgroundServices
 
 import Domain.Data.auth
+import Domain.Data.context
 import Domain.Data.database
 import Domain.Data.driverCurrentLocation
 import Domain.Data.userData
+import android.Manifest
 import android.app.Service
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import com.mapbox.android.core.location.*
 import com.mapbox.geojson.Point
 import com.simpdev.sahmride.LocationListeningCallback
@@ -34,6 +38,23 @@ class LocationBroadcastService: Service() {
                 Log.d("Services Start",userData.active.toString())
                 if(userData.active)
                 {
+                    if (ActivityCompat.checkSelfPermission(
+                            context!!,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                            context!!,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        // TODO: Consider calling
+                        //    ActivityCompat#requestPermissions
+                        // here to request the missing permissions, and then overriding
+                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                        //                                          int[] grantResults)
+                        // to handle the case where the user grants the permission. See the documentation
+                        // for ActivityCompat#requestPermissions for more details.
+                        return
+                    }
                     locationEngine.requestLocationUpdates(request,locationCallback, Looper.myLooper())
                     locationEngine.getLastLocation(object :
                         LocationEngineCallback<LocationEngineResult> {

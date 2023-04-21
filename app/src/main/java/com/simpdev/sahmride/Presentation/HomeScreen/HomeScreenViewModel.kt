@@ -1,6 +1,12 @@
 package com.simpdev.sahmride.Presentation.HomeScreen
 
-import Domain.Data.*
+import Domain.Data.auth
+import Domain.Data.checkActiveStatus
+import Domain.Data.database
+import Domain.Data.db
+import Domain.Data.readUserDataToFile
+import Domain.Data.startLocationBroadcastService
+import Domain.Data.userData
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -26,7 +32,6 @@ class HomeScreenViewModel: ViewModel() {
         refSeats.get().addOnSuccessListener {
             state = state.copy(availableSeats = it.value.toString())
         }
-
         FetchRideHistory()
 
     }

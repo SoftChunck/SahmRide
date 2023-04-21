@@ -5,6 +5,7 @@ sealed class NavigationEvent(val route:String){
     object RideScreen : NavigationEvent("rideScreen")
     object ProfileScreen : NavigationEvent("profileScreen")
     object ConfigurationScreen : NavigationEvent("configurationScreen")
+    object WalletScreen:NavigationEvent("walletScreen")
     data class userUidChange(val uid:String):NavigationEvent("")
     data class userAccepted(val distance:String?):NavigationEvent("")
     object userRejected:NavigationEvent("")

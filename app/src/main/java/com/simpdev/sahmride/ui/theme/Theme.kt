@@ -1,5 +1,4 @@
-package com.example.compose
-
+package com.simpdev.sahmride.ui.theme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -73,6 +72,23 @@ private val DarkColors = darkColorScheme(
 )
 
 @Composable
+fun AppTheme(
+    useDarkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable() () -> Unit
+) {
+    val colors = if (!useDarkTheme) {
+        LightColors
+    } else {
+        DarkColors
+    }
+
+    MaterialTheme(
+        colorScheme = colors,
+        content = content
+    )
+}
+
+@Composable
 fun SahmRideTheme(
   useDarkTheme: Boolean = isSystemInDarkTheme(),
   content: @Composable() () -> Unit
@@ -88,3 +104,32 @@ fun SahmRideTheme(
     content = content
   )
 }
+
+//@Composable
+//fun AppTheme(
+//    isDarkTheme: Boolean = isSystemInDarkTheme(),
+//    isDynamicColor: Boolean = true,
+//    content: @Composable () -> Unit
+//) {
+//
+//    /**
+//     * Dynamic Colors are supported on API level 31 and above
+//     * */
+//    val dynamicColor = isDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+//    val colorScheme = when {
+//        dynamicColor && isDarkTheme -> {
+//            dynamicDarkColorScheme(LocalContext.current)
+//        }
+//        dynamicColor && !isDarkTheme -> {
+//            dynamicLightColorScheme(LocalContext.current)
+//        }
+//        isDarkTheme -> DarkColors
+//        else -> LightColors
+//    }
+//
+//    // Make use of Material3 imports
+//    MaterialTheme(
+//        colorScheme = colorScheme,
+//        content = content
+//    )
+//}

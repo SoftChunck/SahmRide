@@ -19,6 +19,7 @@ data class TripState(
     val usersAvalible:Boolean = false,
     val loadingUserProfile:Boolean = true,
     val userPic: ImageBitmap? = null,
+    val refresh:Int = 1,
 
     var waypoints:MutableList<Point> = emptyList<Point>().toMutableList(),
     var rideSharingRideDetails: SnapshotStateList<RideDetails> = mutableStateListOf<RideDetails>(),

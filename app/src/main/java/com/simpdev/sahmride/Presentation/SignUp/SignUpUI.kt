@@ -2,19 +2,44 @@ package com.simpdev.sahmride.Presentation.SignUp
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.MarkEmailRead
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -27,6 +52,7 @@ import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.simpdev.sahmride.CurrentScreen
 import com.simpdev.sahmride.MainScreenEvents
@@ -39,13 +65,19 @@ fun SignUpUI(mainScreenViewModel: MainScreenViewModel) {
     val viewModel = viewModel<SignUpViewModel>()
     val state = viewModel.state
     val focusManager = LocalFocusManager.current
-    Box {
+    Box(
+        modifier = Modifier
+            .zIndex(1F)
+            .fillMaxSize()){
+        Image(painter = painterResource(id = R.drawable.bg0), contentDescription = null, contentScale = ContentScale.FillBounds)
+    }
         Column (
             modifier = Modifier
                 .fillMaxSize()
+                .zIndex(2F)
                 .padding(horizontal = 15.dp)
                 .verticalScroll(state = rememberScrollState()),
-            verticalArrangement = Arrangement.Top,
+            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ){
             if(state.accountCreated)
@@ -73,13 +105,14 @@ fun SignUpUI(mainScreenViewModel: MainScreenViewModel) {
                 )
             }
             Image(
-                painterResource(id = R.drawable.sahmlogo),
+                painterResource(id = R.drawable.logobgg),
                 contentDescription = "",
             )
             Text(text = "Create Account",
+                modifier = Modifier.padding(vertical = 15.dp),
                 fontSize = TextUnit(7f, TextUnitType.Em),
                 fontWeight = FontWeight(700),
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.background
             )
             Spacer(modifier = Modifier
                 .height(14.dp))
@@ -104,7 +137,13 @@ fun SignUpUI(mainScreenViewModel: MainScreenViewModel) {
                     colors = TextFieldDefaults
                         .outlinedTextFieldColors(
                             containerColor = Color.Transparent,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.primary
+                            unfocusedBorderColor = MaterialTheme.colorScheme.background,
+                            focusedBorderColor = MaterialTheme.colorScheme.background,
+                            cursorColor = MaterialTheme.colorScheme.background,
+                            textColor = MaterialTheme.colorScheme.background,
+                            placeholderColor = MaterialTheme.colorScheme.background,
+                            focusedLabelColor = MaterialTheme.colorScheme.background,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.background,
                         ),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     label = { Text(text = "First Name") },
@@ -125,7 +164,13 @@ fun SignUpUI(mainScreenViewModel: MainScreenViewModel) {
                     colors = TextFieldDefaults
                         .outlinedTextFieldColors(
                             containerColor = Color.Transparent,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.primary
+                            unfocusedBorderColor = MaterialTheme.colorScheme.background,
+                            focusedBorderColor = MaterialTheme.colorScheme.background,
+                            cursorColor = MaterialTheme.colorScheme.background,
+                            textColor = MaterialTheme.colorScheme.background,
+                            placeholderColor = MaterialTheme.colorScheme.background,
+                            focusedLabelColor = MaterialTheme.colorScheme.background,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.background,
                         ),
                     label = { Text(text = "Last Name") },
                     placeholder = { Text(text = "Last Name") },
@@ -144,17 +189,21 @@ fun SignUpUI(mainScreenViewModel: MainScreenViewModel) {
                         viewModel.onEvent(SignUpEvents.expandGenderListChanged(!state.expandGenderList))
                     }),
                 colors = TextFieldDefaults.textFieldColors(
-                    disabledTextColor = Color.Black,
-                    disabledLabelColor = MaterialTheme.colorScheme.primary,
-                    disabledIndicatorColor = MaterialTheme.colorScheme.primary,
-                    containerColor = MaterialTheme.colorScheme.background
+                    disabledTextColor = Color.White,
+                    disabledLabelColor = MaterialTheme.colorScheme.background,
+                    disabledIndicatorColor = MaterialTheme.colorScheme.background,
+                    containerColor = Color.Transparent,
+                    textColor = MaterialTheme.colorScheme.background,
+                    placeholderColor = MaterialTheme.colorScheme.background,
+                    disabledPlaceholderColor = MaterialTheme.colorScheme.background,
+
 
                 ),
                 label = { Text(text = "Gender")},
                 placeholder = { Text(text = "Select Gender")},
                 trailingIcon = {
-                    if (state.expandGenderList) Icon(Icons.Filled.ExpandLess, contentDescription = "")
-                    else Icon(Icons.Filled.ExpandMore, contentDescription = "")
+                    if (state.expandGenderList) Icon(Icons.Filled.ExpandLess, contentDescription = "",tint = MaterialTheme.colorScheme.background)
+                    else Icon(Icons.Filled.ExpandMore, contentDescription = "",tint = MaterialTheme.colorScheme.background)
                 },
                 enabled = false,
                 value = state.genderList[state.selectedGender],
@@ -187,7 +236,13 @@ fun SignUpUI(mainScreenViewModel: MainScreenViewModel) {
                 colors = TextFieldDefaults
                     .outlinedTextFieldColors(
                         containerColor = Color.Transparent,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.primary
+                        unfocusedBorderColor = MaterialTheme.colorScheme.background,
+                        focusedBorderColor = MaterialTheme.colorScheme.background,
+                        cursorColor = MaterialTheme.colorScheme.background,
+                        textColor = MaterialTheme.colorScheme.background,
+                        placeholderColor = MaterialTheme.colorScheme.background,
+                        focusedLabelColor = MaterialTheme.colorScheme.background,
+                        unfocusedLabelColor = MaterialTheme.colorScheme.background,
                     ),
                 label = { Text(text = "Email") },
                 isError = state.emailError != null,
@@ -215,7 +270,13 @@ fun SignUpUI(mainScreenViewModel: MainScreenViewModel) {
                 colors = TextFieldDefaults
                     .outlinedTextFieldColors(
                         containerColor = Color.Transparent,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.primary
+                        unfocusedBorderColor = MaterialTheme.colorScheme.background,
+                        focusedBorderColor = MaterialTheme.colorScheme.background,
+                        cursorColor = MaterialTheme.colorScheme.background,
+                        textColor = MaterialTheme.colorScheme.background,
+                        placeholderColor = MaterialTheme.colorScheme.background,
+                        focusedLabelColor = MaterialTheme.colorScheme.background,
+                        unfocusedLabelColor = MaterialTheme.colorScheme.background,
                     ),
                 label = { Text(text = "Password") },
                 isError = state.passwordError != null,
@@ -227,11 +288,13 @@ fun SignUpUI(mainScreenViewModel: MainScreenViewModel) {
                 trailingIcon = { if(state.viewPassword) Icon(
                     Icons.Filled.VisibilityOff,
                     contentDescription = " View Password ",
+                    tint = MaterialTheme.colorScheme.background,
                     modifier = Modifier
                         .clickable(onClick = {   viewModel.onEvent(SignUpEvents.viewPasswordChange)   }, enabled = true) )
                 else Icon(
                     Icons.Filled.Visibility,
                     contentDescription = " View Password ",
+                    tint = MaterialTheme.colorScheme.background,
                     modifier = Modifier
                         .clickable(onClick = {   viewModel.onEvent(SignUpEvents.viewPasswordChange)  }, enabled = true) ) },
                 placeholder = { Text(text = "Password") },
@@ -253,7 +316,7 @@ fun SignUpUI(mainScreenViewModel: MainScreenViewModel) {
             }
             Spacer(modifier = Modifier
                 .height(14.dp))
-            Button(onClick = {
+            ElevatedButton(onClick = {
                              viewModel.onEvent(SignUpEvents.SignupClicked)
             },
                 enabled = !state.signingUp,
@@ -268,21 +331,20 @@ fun SignUpUI(mainScreenViewModel: MainScreenViewModel) {
                         text = "CREATE ACCOUNT"
                     )
             }
+            Spacer(modifier = Modifier
+                .height(14.dp))
             Text(text = " or already have an account",
-                color = Color.Gray,
+                color = Color.White,
                 style = MaterialTheme.typography.bodySmall,)
             ElevatedButton(onClick = {
                 mainScreenViewModel.onEvent(MainScreenEvents.ChangeScreen(CurrentScreen.SignIn))
             },
-                shape = MaterialTheme.shapes.large,
+                shape = MaterialTheme.shapes.small,
                 modifier = Modifier
-                    .fillMaxWidth(0.7f),
+                    .fillMaxWidth(0.4f),
             ) {
                 Text(text = "SIGN IN")
             }
-            Spacer(modifier = Modifier
-                .height(14.dp))
         }
-    }
 }
 

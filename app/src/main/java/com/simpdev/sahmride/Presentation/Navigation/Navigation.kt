@@ -29,6 +29,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.simpdev.sahmride.Presentation.Config.ConfigUi
 import com.simpdev.sahmride.Presentation.HomeScreen.HomeScreenUi
 import com.simpdev.sahmride.Presentation.Navigation.NavigationEvent
 import com.simpdev.sahmride.Presentation.Navigation.NavigationScreen
@@ -36,7 +37,7 @@ import com.simpdev.sahmride.Presentation.Navigation.NavigationViewModel
 import com.simpdev.sahmride.Presentation.Trip.TripUi
 import com.simpdev.sahmride.Presentation.TripUser.TripUser
 import com.simpdev.sahmride.Presentation.UserProfile.UserProfileUI
-import kotlin.math.roundToInt
+import com.simpdev.sahmride.Presentation.Wallet.WalletUI
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,7 +53,6 @@ fun Navigation(
             viewModel.loadUserData()
             viewModel.loadProfilePic()
         }
-
     }
     val navController = rememberNavController()
 
@@ -76,7 +76,8 @@ fun Navigation(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Image(
-                            painterResource(id = R.drawable.sahmlogo),
+                            modifier = Modifier.padding(horizontal = 50.dp, vertical = 20.dp),
+                            painter = painterResource(id = R.drawable.logov),
                             contentDescription = "",
                         )
                         CircularProgressIndicator()
@@ -114,7 +115,8 @@ fun Navigation(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Image(
-                                painterResource(id = R.drawable.sahmlogo),
+                                modifier = Modifier.padding(horizontal = 50.dp, vertical = 20.dp),
+                                painter = painterResource(id = R.drawable.logov),
                                 contentDescription = "",
                             )
                             CircularProgressIndicator()
@@ -173,6 +175,16 @@ fun Navigation(
                         label = { Text(text = "Ride") }
                     )
                     NavigationBarItem(
+                        selected = currentDestination?.hierarchy?.any { it.route == NavigationEvent.WalletScreen.route } == true,
+                        onClick = {
+                            navController.navigate(NavigationEvent.WalletScreen.route)
+                        },
+                        icon = {
+                            Icon(Icons.Filled.AccountBalanceWallet, contentDescription = "" )
+                        },
+                        label = { Text(text = "Wallet") }
+                    )
+                    NavigationBarItem(
                         selected = currentDestination?.hierarchy?.any { it.route == NavigationEvent.ProfileScreen.route } == true,
                         onClick = {
                             navController.navigate(NavigationEvent.ProfileScreen.route)
@@ -181,16 +193,6 @@ fun Navigation(
                             Icon(Icons.Filled.Person, contentDescription = "" )
                         },
                         label = { Text(text = "Profile") }
-                    )
-                    NavigationBarItem(
-                        selected = currentDestination?.hierarchy?.any { it.route == NavigationEvent.ConfigurationScreen.route } == true,
-                        onClick = {
-                            navController.navigate(NavigationEvent.ConfigurationScreen.route)
-                        },
-                        icon = {
-                            Icon(Icons.Filled.Settings, contentDescription = "" )
-                        },
-                        label = { Text(text = "Config") }
                     )
                 }
             }) {
@@ -209,7 +211,7 @@ fun Navigation(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .fillMaxHeight(0.35f)
+                                        .fillMaxHeight(0.3f)
                                         .background(
                                             shape = RoundedCornerShape(
                                                 topStart = 25.dp,
@@ -303,7 +305,7 @@ fun Navigation(
                                             )
                                             Text(
                                                 style = MaterialTheme.typography.bodySmall,
-                                                text =  it.distanceFromDriver + "km " + it.durationFromDriver
+                                                text =  it.distanceFromDriver + "km " + it.durationFromDriver,
                                             )
                                         }
                                         Row(
@@ -319,8 +321,8 @@ fun Navigation(
                                                 text = "Price"
                                             )
                                             Text(
-                                                style = MaterialTheme.typography.bodySmall,
-                                                text =  (it.distance!!.toDouble()  * priceOfFule * fulePerKm).roundToInt().toString() + " Rs"
+                                                text = "${it.price} Rs",
+                                                fontWeight = FontWeight.SemiBold
                                             )
                                         }
                                         Row(
@@ -364,7 +366,10 @@ fun Navigation(
                         UserProfileUI(innerPadding = innerPadding)
                     }
                     composable(route = NavigationEvent.ConfigurationScreen.route){
-
+                        ConfigUi()
+                    }
+                    composable(route = NavigationEvent.WalletScreen.route){
+                        WalletUI()
                     }
                 }
             }

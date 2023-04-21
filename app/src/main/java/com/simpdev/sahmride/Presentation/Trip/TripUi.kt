@@ -1,31 +1,71 @@
 package com.simpdev.sahmride.Presentation.Trip
 
-import Domain.Data.*
+import Domain.Data.ApiService
+import Domain.Data.auth
+import Domain.Data.database
+import Domain.Data.db
+import Domain.Data.drawCircularAnnotation
+import Domain.Data.driverCurrentLocation
+import Domain.Data.flytoLocation
+import Domain.Data.storageRef
+import Domain.Data.trackCurrentLocation
+import Domain.Data.userData
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Female
+import androidx.compose.material.icons.filled.Male
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarOutline
+import androidx.compose.material3.Button
+import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.gson.GsonBuilder
@@ -60,15 +100,30 @@ import com.mapbox.navigation.ui.tripprogress.model.DistanceRemainingFormatter
 import com.mapbox.navigation.ui.tripprogress.model.EstimatedTimeToArrivalFormatter
 import com.mapbox.navigation.ui.tripprogress.model.TimeRemainingFormatter
 import com.mapbox.navigation.ui.tripprogress.model.TripProgressUpdateFormatter
-import com.simpdev.sahmride.*
 import com.simpdev.sahmride.Domain.RideDetails
-import com.simpdev.sahmride.Presentation.Chat.ChatUi
 import com.simpdev.sahmride.Presentation.Navigation.NavigationEvent
 import com.simpdev.sahmride.Presentation.Navigation.NavigationViewModel
 import com.simpdev.sahmride.Presentation.Ride.RideEvent
 import com.simpdev.sahmride.Presentation.Ride.RideScreen
 import com.simpdev.sahmride.Presentation.Ride.RideViewModel
+import com.simpdev.sahmride.Presentation.StreamChat.StreamChat
 import com.simpdev.sahmride.R
+import com.simpdev.sahmride.customColorResources
+import com.simpdev.sahmride.displayDensity
+import com.simpdev.sahmride.mapNav
+import com.simpdev.sahmride.mapView
+import com.simpdev.sahmride.naivgationRouterCallback
+import com.simpdev.sahmride.routeLineApi
+import com.simpdev.sahmride.routeLineOptions
+import com.simpdev.sahmride.routeLineResources
+import com.simpdev.sahmride.routeLineView
+import com.simpdev.sahmride.routeOptions
+import com.simpdev.sahmride.routesObserver
+import io.getstream.chat.android.client.ChatClient
+import io.getstream.chat.android.client.models.User
+import io.getstream.chat.android.offline.extensions.watchChannelAsState
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.math.RoundingMode
 import java.text.DecimalFormat
 import kotlin.math.roundToInt
@@ -87,6 +142,39 @@ fun TripUi(
     val viewModel = viewModel<TripViewModel>()
     val state = viewModel.state
     LaunchedEffect(key1 = 1, block = {
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://gentle-patch-dinosaur.glitch.me/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val apiService = retrofit.create(ApiService::class.java)
+
+        try {
+            val response = apiService.getApiResponse(uid = auth.currentUser!!.uid)
+            val token = response.token
+            storageRef.child("images/${auth.currentUser?.uid}/profile").downloadUrl.addOnSuccessListener {
+                val user = User(
+                    id = auth.currentUser!!.uid,
+                    extraData = mutableMapOf(
+                        "name" to userData.firstName.toString(),
+                        "image" to it.toString()
+                    )
+                )
+                ChatClient.instance().connectUser(user,token,86400000) // Replace with a real token
+                    .enqueue { result ->
+                        if (result.isSuccess) {
+                            Log.d("Chat","${token}")
+                        } else {
+                            Log.d("Chat","Error")
+
+                        }
+                    }
+            }
+        } catch (e: Exception) {
+            // Handle the exception
+        }
+    })
+    LaunchedEffect(key1 = state.refresh, block = {
         state.waypoints = emptyList<Point>().toMutableList()
         database.reference.child("driversLocation").child(auth.currentUser!!.uid).child("waypoints").orderByKey().get().addOnSuccessListener {
             it.children.forEach {
@@ -205,7 +293,23 @@ fun TripUi(
         mapNav.registerRoutesObserver(routesObserver)
         mapNav.requestRoutes(routeOptions,naivgationRouterCallback)
         mapView?.let { trackCurrentLocation(it, displayDensity) }
-            mapNav.startTripSession(true)
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+        }
+        mapNav.startTripSession(true)
 
             mapView?.location?.apply {
                 this.locationPuck = LocationPuck2D(
@@ -227,19 +331,21 @@ fun TripUi(
                 Column(
                     modifier = Modifier
                         .zIndex(7f)
+                        .background(color = Color.Black)
                         .fillMaxSize(),
+
                     verticalArrangement = Arrangement.Bottom
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .fillMaxHeight(0.35f)
+                            .fillMaxHeight(0.3f)
                             .background(
                                 shape = RoundedCornerShape(
                                     topStart = 25.dp,
                                     topEnd = 25.dp
                                 ),
-                                color = MaterialTheme.colorScheme.secondaryContainer
+                                color = MaterialTheme.colorScheme.background
                             ),
                         verticalArrangement = Arrangement.Top,
                         horizontalAlignment = Alignment.Start
@@ -282,8 +388,35 @@ fun TripUi(
                                     fontWeight = FontWeight.SemiBold,
                                     fontFamily = FontFamily.SansSerif,
                                     fontSize = 3.8.em,
-                                    text = it.UserInfo.firstName+ " " + it.UserInfo.lastName
+                                    text = "${it.UserInfo.firstName} ${it.UserInfo.lastName}"
                                 )
+                                Row{
+                                    Icon(
+                                        imageVector = if (it.UserInfo.rating >= 1) Icons.Filled.Star else Icons.Filled.StarOutline,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                    )
+                                    Icon(
+                                        imageVector = if (it.UserInfo.rating >= 2) Icons.Filled.Star else Icons.Filled.StarOutline,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                    )
+                                    Icon(
+                                        imageVector = if (it.UserInfo.rating >= 3) Icons.Filled.Star else Icons.Filled.StarOutline,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                    )
+                                    Icon(
+                                        imageVector = if (it.UserInfo.rating >= 4) Icons.Filled.Star else Icons.Filled.StarOutline,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                    )
+                                    Icon(
+                                        imageVector = if (it.UserInfo.rating >= 5) Icons.Filled.Star else Icons.Filled.StarOutline,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                    )
+                                }
                                 Row(
                                     horizontalArrangement = Arrangement.End,
                                 ){
@@ -294,58 +427,60 @@ fun TripUi(
                         }
                         Column(
                             modifier = Modifier
-                                .offset(0.dp,(-30.dp))
+                                .offset(0.dp,(-30.dp)),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Row(
+                            Row (
                                 modifier = Modifier
-                                    .padding(horizontal = 20.dp)
-                                    .fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontFamily = FontFamily.SansSerif,
-                                    fontSize = 3.4.em,
-                                    text = "Pickup --- Destination"
-                                )
-                                Text(
-                                    style = MaterialTheme.typography.bodySmall,
-                                    text = it.distance +"km "+ it.duration
-                                )
-                            }
-                            Row(
-                                modifier = Modifier
-                                    .padding(horizontal = 20.dp)
-                                    .fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontFamily = FontFamily.SansSerif,
-                                    fontSize = 3.4.em,
-                                    text = "CurrentLocation --- Pickup"
-                                )
-                                Text(
-                                    style = MaterialTheme.typography.bodySmall,
-                                    text =  it.distanceFromDriver + "km " + it.durationFromDriver
-                                )
-                            }
-                            Row(
-                                modifier = Modifier
-                                    .padding(horizontal = 20.dp)
-                                    .fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontFamily = FontFamily.SansSerif,
-                                    fontSize = 4.em,
-                                    text = "Price"
-                                )
-                                Text(
-                                    style = MaterialTheme.typography.bodySmall,
-                                    text =  (it.distance!!.toDouble()  * priceOfFule * fulePerKm).roundToInt().toString() + " Rs"
-                                )
+                                    .background(
+                                        color = MaterialTheme.colorScheme.secondaryContainer,
+                                        shape = RoundedCornerShape(20.dp)
+                                    )
+                                    .padding(vertical = 9.dp)
+                                    .fillMaxWidth(0.9f),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ){
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.ridedetails),
+                                        modifier = Modifier
+                                            .width(32.dp)
+                                            .height(32.dp),
+                                        contentScale = ContentScale.Crop,
+                                        contentDescription = ""
+                                    )
+                                    Text(
+                                        color =MaterialTheme.colorScheme.onBackground,
+                                        modifier = Modifier.padding(10.dp),
+                                        text = " ${it.distance}km ",
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Text(
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                        text = " ${it.duration}",
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ){
+                                    Image(
+                                        painter = painterResource(id = R.drawable.money),
+                                        modifier = Modifier
+                                            .width(32.dp)
+                                            .height(32.dp),
+                                        contentScale = ContentScale.Crop,
+                                        contentDescription = ""
+                                    )
+                                    Text(
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                        text = "PKR ${it.price}",
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
                             }
                             Row(
                                 modifier = Modifier
@@ -364,7 +499,7 @@ fun TripUi(
                                             Log.d("request","Accepted")
                                         }
                                     it.request = "accepted"
-                                    viewModel.onEvent(TripEvents.userAccepted(it.distance))
+                                    viewModel.onEvent(TripEvents.userAccepted(it.UserInfo.userUid!!))
                                 }) {
                                     Text(text = "Accept")
                                 }
@@ -373,168 +508,176 @@ fun TripUi(
                     }
                 }
             }
-        }
-
-//        Column(
-//            modifier = Modifier
-//                .zIndex(7f)
-//                .fillMaxSize(),
-//            verticalArrangement = Arrangement.Bottom
-//        ) {
-//            Column(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .fillMaxHeight(0.35f)
-//                    .background(
-//                        shape = RoundedCornerShape(
-//                            topStart = 25.dp,
-//                            topEnd = 25.dp
-//                        ),
-//                        color = MaterialTheme.colorScheme.secondaryContainer
-//                    ),
-//                verticalArrangement = if(state.loadingUserProfile) Arrangement.Center else Arrangement.Top,
-//                horizontalAlignment = if(state.loadingUserProfile) Alignment.CenterHorizontally else Alignment.Start
-//            ) {
-//                if(state.loadingUserProfile)
-//                {
-//                    CircularProgressIndicator()
-//                }
-//                else
-//                {
-//                    Row(
-//                        modifier = Modifier
-//                            .fillMaxWidth(),
-//                        horizontalArrangement = Arrangement.SpaceBetween
-//                    ) {
-//                        if(state.userPic != null)
-//                            Image(
-//                                modifier = Modifier
-//                                    .width(100.dp)
-//                                    .height(100.dp)
-//                                    .offset(25.dp, (-45).dp)
-//                                    .clip(shape = CircleShape),
-//                                contentScale = ContentScale.Crop,
-//                                bitmap = state.userPic!!,
-//                                contentDescription = null
-//                            )
-//                        else
-//                            Image(
-//                                modifier = Modifier
-//                                    .width(100.dp)
-//                                    .height(100.dp)
-//                                    .offset(25.dp, (-45).dp)
-//                                    .clip(shape = CircleShape),
-//                                contentScale = ContentScale.Crop,
-//                                painter = painterResource(id = R.drawable.man),
-//                                contentDescription = null,
-//                            )
-//                        Column(
-//                            modifier = Modifier
-//                                .fillMaxWidth()
-//                                .padding(top = 20.dp)
-//                            ,
-//                            horizontalAlignment = Alignment.CenterHorizontally
-//                        ) {
-//                            Text(
-//                                fontWeight = FontWeight.SemiBold,
-//                                fontFamily = FontFamily.SansSerif,
-//                                fontSize = 3.8.em,
-//                                text = state.firstName+ " " + state.lastName
-//                            )
-//                            Row(
-//                                horizontalArrangement = Arrangement.End,
-//                            ){
-//                                Icon(imageVector = if(state.gender == "Male") Icons.Filled.Male else Icons.Filled.Female, contentDescription = null, modifier = Modifier.size(20.dp),tint = MaterialTheme.colorScheme.secondary)
-//                                Text(text = state.gender.toString(), fontSize = 14.sp)
-//                            }
-//                        }
-//                    }
+//            {
+//                Column(
+//                    modifier = Modifier
+//                        .zIndex(7f)
+//                        .fillMaxSize(),
+//                    verticalArrangement = Arrangement.Bottom
+//                ) {
 //                    Column(
 //                        modifier = Modifier
-//                            .offset(0.dp,(-30.dp))
+//                            .fillMaxWidth()
+//                            .fillMaxHeight(0.35f)
+//                            .background(
+//                                shape = RoundedCornerShape(
+//                                    topStart = 25.dp,
+//                                    topEnd = 25.dp
+//                                ),
+//                                color = MaterialTheme.colorScheme.secondaryContainer
+//                            ),
+//                        verticalArrangement = Arrangement.Top,
+//                        horizontalAlignment = Alignment.Start
 //                    ) {
 //                        Row(
 //                            modifier = Modifier
-//                                .padding(horizontal = 20.dp)
 //                                .fillMaxWidth(),
 //                            horizontalArrangement = Arrangement.SpaceBetween
 //                        ) {
-//                            Text(
-//                                fontWeight = FontWeight.SemiBold,
-//                                fontFamily = FontFamily.SansSerif,
-//                                fontSize = 3.4.em,
-//                                text = "Pickup --- Destination"
-//                            )
-//                            Text(
-//                                style = MaterialTheme.typography.bodySmall,
-//                                text = state.distance +"km "+ state.duration
-//                            )
-//                        }
-//                        Row(
-//                            modifier = Modifier
-//                                .padding(horizontal = 20.dp)
-//                                .fillMaxWidth(),
-//                            horizontalArrangement = Arrangement.SpaceBetween
-//                        ) {
-//                            Text(
-//                                fontWeight = FontWeight.SemiBold,
-//                                fontFamily = FontFamily.SansSerif,
-//                                fontSize = 3.4.em,
-//                                text = "CurrentLocation --- Pickup"
-//                            )
-//                            Text(
-//                                style = MaterialTheme.typography.bodySmall,
-//                                text =  state.distanceFromDriver + "km " + state.durationFromDriver
-//                            )
-//                        }
-//                        Row(
-//                            modifier = Modifier
-//                                .padding(horizontal = 20.dp)
-//                                .fillMaxWidth(),
-//                            horizontalArrangement = Arrangement.SpaceBetween
-//                        ) {
-//                            Text(
-//                                fontWeight = FontWeight.SemiBold,
-//                                fontFamily = FontFamily.SansSerif,
-//                                fontSize = 4.em,
-//                                text = "Price"
-//                            )
-//                            Text(
-//                                style = MaterialTheme.typography.bodySmall,
-//                                text =  (state.distance!!.toDouble()  * priceOfFule * fulePerKm).roundToInt().toString() + " Rs"
-//                            )
-//                        }
-//                        Row(
-//                            modifier = Modifier
-//                                .padding(top = 20.dp)
-//                                .fillMaxWidth(),
-//                            horizontalArrangement = Arrangement.SpaceEvenly
-//                        ) {
-//                            ElevatedButton(onClick = {
-//                                viewModel.onEvent(TripEvents.userRejected)
-//                            }) {
-//                                Text(text = "Reject")
+//                            if(it.UserInfo.userPic != null)
+//                                Image(
+//                                    modifier = Modifier
+//                                        .width(100.dp)
+//                                        .height(100.dp)
+//                                        .offset(25.dp, (-45).dp)
+//                                        .clip(shape = CircleShape),
+//                                    contentScale = ContentScale.Crop,
+//                                    bitmap = it.UserInfo.userPic!!,
+//                                    contentDescription = null
+//                                )
+//                            else
+//                                Image(
+//                                    modifier = Modifier
+//                                        .width(100.dp)
+//                                        .height(100.dp)
+//                                        .offset(25.dp, (-45).dp)
+//                                        .clip(shape = CircleShape),
+//                                    contentScale = ContentScale.Crop,
+//                                    painter = painterResource(id = R.drawable.man),
+//                                    contentDescription = null,
+//                                )
+//                            Column(
+//                                modifier = Modifier
+//                                    .fillMaxWidth()
+//                                    .padding(top = 20.dp)
+//                                ,
+//                                horizontalAlignment = Alignment.CenterHorizontally
+//                            ) {
+//                                Text(
+//                                    fontWeight = FontWeight.SemiBold,
+//                                    fontFamily = FontFamily.SansSerif,
+//                                    fontSize = 3.8.em,
+//                                    text = it.UserInfo.firstName+ " " + it.UserInfo.lastName
+//                                )
+//                                Row(
+//                                    horizontalArrangement = Arrangement.End,
+//                                ){
+//                                    Icon(imageVector = if(it.UserInfo.gender == "Male") Icons.Filled.Male else Icons.Filled.Female, contentDescription = null, modifier = Modifier.size(20.dp),tint = MaterialTheme.colorScheme.secondary)
+//                                    Text(text = it.UserInfo.gender.toString(), fontSize = 14.sp)
+//                                }
 //                            }
-//                            Button(onClick = {
-//                                db.collection("ridesDetail").document(state.userUid!!)
-//                                    .update("request","accepted").addOnSuccessListener {
-//                                        Log.d("request","Accepted")
-//                                    }
-//
-//                                viewModel.onEvent(TripEvents.userAccepted)
-//                            }) {
-//                                Text(text = "Accept")
+//                        }
+//                        Column(
+//                            modifier = Modifier
+//                                .offset(0.dp,(-30.dp))
+//                        ) {
+//                            Row(
+//                                modifier = Modifier
+//                                    .padding(horizontal = 20.dp)
+//                                    .fillMaxWidth(),
+//                                horizontalArrangement = Arrangement.SpaceBetween
+//                            ) {
+//                                Text(
+//                                    fontWeight = FontWeight.SemiBold,
+//                                    fontFamily = FontFamily.SansSerif,
+//                                    fontSize = 3.4.em,
+//                                    text = "Pickup --- Destination"
+//                                )
+//                                Text(
+//                                    style = MaterialTheme.typography.bodySmall,
+//                                    text = it.distance +"km "+ it.duration
+//                                )
+//                            }
+//                            Row(
+//                                modifier = Modifier
+//                                    .padding(horizontal = 20.dp)
+//                                    .fillMaxWidth(),
+//                                horizontalArrangement = Arrangement.SpaceBetween
+//                            ) {
+//                                Text(
+//                                    fontWeight = FontWeight.SemiBold,
+//                                    fontFamily = FontFamily.SansSerif,
+//                                    fontSize = 3.4.em,
+//                                    text = "CurrentLocation --- Pickup"
+//                                )
+//                                Text(
+//                                    style = MaterialTheme.typography.bodySmall,
+//                                    text =  it.distanceFromDriver + "km " + it.durationFromDriver
+//                                )
+//                            }
+//                            Row(
+//                                modifier = Modifier
+//                                    .padding(horizontal = 20.dp)
+//                                    .fillMaxWidth(),
+//                                horizontalArrangement = Arrangement.SpaceBetween
+//                            ) {
+//                                Text(
+//                                    fontWeight = FontWeight.SemiBold,
+//                                    fontFamily = FontFamily.SansSerif,
+//                                    fontSize = 4.em,
+//                                    text = "Price"
+//                                )
+//                                Text(
+//                                    style = MaterialTheme.typography.bodySmall,
+//                                    text =  "${it.price} Rs"
+//                                )
+//                            }
+//                            Row(
+//                                modifier = Modifier
+//                                    .padding(top = 20.dp)
+//                                    .fillMaxWidth(),
+//                                horizontalArrangement = Arrangement.SpaceEvenly
+//                            ) {
+//                                ElevatedButton(onClick = {
+//                                    viewModel.onEvent(TripEvents.userRejected)
+//                                }) {
+//                                    Text(text = "Reject")
+//                                }
+//                                Button(onClick = {
+//                                    db.collection("ridesDetail").document(it.UserInfo.userUid!!)
+//                                        .update("request","accepted").addOnSuccessListener {
+//                                            Log.d("request","Accepted")
+//                                        }
+//                                    it.request = "accepted"
+//                                    viewModel.onEvent(TripEvents.userAccepted(it.UserInfo.userUid!!))
+//                                }) {
+//                                    Text(text = "Accept")
+//                                }
 //                            }
 //                        }
 //                    }
 //                }
 //            }
-//        }
+        }
     }
     when(state.currentScreen)
     {
         is TripScreen.ChatScreen -> {
-            ChatUi(tripViewModel = viewModel, userUids = userUids,userType = userType, tripUserViewModel = null,userInfo = usersInfo[0].UserInfo)
+//            ChatUi(tripViewModel = viewModel, userUids = userUids,userType = userType, tripUserViewModel = null,userInfo = usersInfo[0].UserInfo)
+            ChatClient.instance().createChannel("messaging",auth.currentUser!!.uid, listOf(auth.currentUser!!.uid,userUids[0]),mutableMapOf<String, Any>(
+                "name" to "Chat" ,
+                "description" to "A channel for discussing various topics"
+            )).enqueue { result ->
+                if (result.isSuccess) {
+                    Log.d("Channellll","User Connected To Chat")
+                } else {
+                    Log.d("Channellll",result.toString())
+                }
+            }
+            ChatClient.instance().watchChannelAsState(
+                "messaging:"+userUids[0].toString(),99
+            )
+            StreamChat(tripDriverViewModel = viewModel)
         }
         is TripScreen.TripHome -> {
             Box {
@@ -596,7 +739,11 @@ fun TripUi(
                 df.roundingMode = RoundingMode.DOWN
                 ElevatedCard(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .background(
+                            color = MaterialTheme.colorScheme.background.copy(alpha = 0.6f),
+                        )
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(0.dp)
                 ) {
                     Row(
                         modifier = Modifier
@@ -608,25 +755,15 @@ fun TripUi(
                             .padding(20.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Icon(
-                                Icons.Filled.Timeline, contentDescription = "Ride",
-                                modifier = Modifier
-                                    .width(50.dp)
-                                    .height(50.dp)
-                            )
-                            Text(text = (df.format(distance/1000)).toString()+"km" )
+                            Text(text = (df.format(distance/1000)).toString()+"km", fontSize = 7.em )
+                            Text(text = "Distance" )
                         }
                         Column(modifier = Modifier
                             .padding(20.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Icon(
-                                Icons.Filled.Timer, contentDescription = "Ride",
-                                modifier = Modifier
-                                    .width(50.dp)
-                                    .height(50.dp)
-                            )
-                            Text(text = ((duration/3600).toInt()).toString()+"hr "+(((duration % 3600) / 60).roundToInt()).toString()+"min" )
+                            Text(text = ((duration/3600).toInt()).toString()+"hr "+(((duration % 3600) / 60).roundToInt()).toString()+"min", fontSize = 7.em  )
+                            Text(text = "Duration" )
                         }
                     }
                 }
@@ -646,6 +783,147 @@ fun TripUi(
                         }
                     ){
                         Text(text = "Cancel Ride")
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+@Preview
+fun aaa(){
+    Column(
+        modifier = Modifier
+            .zIndex(7f)
+            .background(color = Color.Black)
+            .fillMaxSize(),
+
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.3f)
+                .background(
+                    shape = RoundedCornerShape(
+                        topStart = 25.dp,
+                        topEnd = 25.dp
+                    ),
+                    color = MaterialTheme.colorScheme.background
+                ),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                    Image(
+                        modifier = Modifier
+                            .width(100.dp)
+                            .height(100.dp)
+                            .offset(25.dp, (-45).dp)
+                            .clip(shape = CircleShape),
+                        contentScale = ContentScale.Crop,
+                        painter = painterResource(id = R.drawable.man),
+                        contentDescription = null,
+                    )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 20.dp)
+                    ,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = FontFamily.SansSerif,
+                        fontSize = 3.8.em,
+                        text = "Usama Muneeb"
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.End,
+                    ){
+                        Icon(imageVector = Icons.Filled.Male , contentDescription = null, modifier = Modifier.size(20.dp),tint = MaterialTheme.colorScheme.secondary)
+                        Text(text = "Male ", fontSize = 14.sp)
+                    }
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .offset(0.dp,(-30.dp)),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row (
+                    modifier = Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                        .padding(vertical = 9.dp)
+                        .fillMaxWidth(0.9f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ){
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ridedetails),
+                            modifier = Modifier
+                                .width(32.dp)
+                                .height(32.dp),
+                            contentScale = ContentScale.Crop,
+                            contentDescription = ""
+                        )
+                        Text(
+                            color =MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.padding(10.dp),
+                            text = " 88km  ",
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            color = MaterialTheme.colorScheme.onBackground,
+                            text = "0hr " + " 40min",
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        Image(
+                            painter = painterResource(id = R.drawable.money),
+                            modifier = Modifier
+                                .width(32.dp)
+                                .height(32.dp),
+                            contentScale = ContentScale.Crop,
+                            contentDescription = ""
+                        )
+                        Text(
+                            color = MaterialTheme.colorScheme.onBackground,
+                            text = "PKR 700",
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+                Row(
+                    modifier = Modifier
+                        .padding(top = 20.dp)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    ElevatedButton(onClick = {
+
+                    }) {
+                        Text(text = "Reject")
+                    }
+                    Button(onClick = {
+
+                    }) {
+                        Text(text = "Accept")
                     }
                 }
             }

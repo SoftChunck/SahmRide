@@ -5,7 +5,9 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Environment
 import android.util.Log
+import androidx.compose.ui.graphics.asImageBitmap
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.ktx.database
 import com.google.firebase.firestore.ktx.firestore
@@ -28,6 +30,9 @@ import com.simpdev.sahmride.BackgroundServices.LocationBroadcastService
 import com.simpdev.sahmride.Domain.Data.UserData
 import com.simpdev.sahmride.Domain.RideDetails
 import com.simpdev.sahmride.R
+import io.getstream.chat.android.client.ChatClient
+import retrofit2.http.GET
+import retrofit2.http.Query
 import java.io.File
 
 
@@ -45,6 +50,8 @@ var circleAnnotationManager:CircleAnnotationManager? = null
 
 val priceOfFule:Double = 280.0
 val fulePerKm:Double = 0.4
+
+var chatClient:ChatClient? = null
 
 fun trackCurrentLocation(mapView: MapView, density:Float){
     mapView.location.updateSettings {
@@ -115,6 +122,25 @@ fun saveUserDataToFile(firstName:String,lastName:String,email:String,gender:Stri
         editor.commit()
         Log.d("Data saved","User Data saved to file")
     }
+
+    val root = Environment.getExternalStorageDirectory()
+    val file = File(root.absolutePath + "/SahmRide/Profile/profile.jpg")
+    try {
+        file.createNewFile()
+
+        val storageReference = storageRef.child("images/${auth.currentUser!!.uid}/profile")
+        storageReference.getFile(file).addOnSuccessListener {
+            val inputStream = context?.contentResolver?.openInputStream(
+                Uri.fromFile(
+                    File(file.path)
+                ))
+            userData.profilePicBitmap = BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
+        }.addOnFailureListener {
+            Log.d("jpeg","File Failed")
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
 }
 //fun updateActiveStatus(active:Boolean){
 //    val sharedPreference = context?.getSharedPreferences("userData",Context.MODE_PRIVATE)
@@ -147,4 +173,19 @@ fun startLocationBroadcastService(){
     context?.startService(startLocationService)
     Log.d("Services Start","Services Start")
 }
+
+data class ApiResponse(
+    val token: String
+)
+interface ApiService {
+    @GET("token")
+    suspend fun getApiResponse(
+        @Query("uid") uid: String,
+    ): ApiResponse
+}
+
+
+
+
+
 

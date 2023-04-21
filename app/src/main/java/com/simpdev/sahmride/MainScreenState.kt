@@ -5,6 +5,7 @@ data class MainScreenState(
 )
 
 sealed class CurrentScreen{
+  object StartingPage:CurrentScreen()
   object HomeScreen:CurrentScreen()
   object SignIn:CurrentScreen()
   object SignUp:CurrentScreen()

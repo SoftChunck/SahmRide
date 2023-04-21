@@ -1,6 +1,10 @@
 package com.simpdev.sahmride.Presentation.SignIn
 
-import Domain.Data.*
+import Domain.Data.auth
+import Domain.Data.db
+import Domain.Data.fetchImageAndSaveToInternalStorage
+import Domain.Data.saveUserDataToFile
+import Domain.Data.storageRef
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -86,6 +90,7 @@ class SigninViewModel(
                             var ref = uid?.let { db.collection("users").document(it) }
                             ref?.get()?.addOnSuccessListener { result ->
                                 if(result != null ){
+                                    storageRef.child("images/${auth.currentUser?.uid}/profile").downloadUrl
                                     saveUserDataToFile(
                                         firstName = result.get("firstName") as String ,
                                         lastName = result.get("lastName") as String,

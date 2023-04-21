@@ -9,5 +9,5 @@ data class HomeScreenState(
     val availableSeats:String = "0",
     val expandMenu:Boolean = false,
     var historyList: MutableList<RideHistory> = emptyList<RideHistory>().toMutableList(),
-    val fetchingRideDetails:Boolean = false
+    val fetchingRideDetails:Boolean = false,
 )

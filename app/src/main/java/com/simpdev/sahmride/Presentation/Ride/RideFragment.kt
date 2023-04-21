@@ -4,14 +4,18 @@ package com.simpdev.sahmride
 
 import Domain.Data.*
 import DriverProfileUi
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -20,10 +24,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.gson.GsonBuilder
@@ -62,6 +70,8 @@ import com.mapbox.search.result.SearchResult
 import com.mapbox.search.result.SearchSuggestion
 import com.simpdev.sahmride.Domain.Data.AvalibleDriverData
 import com.simpdev.sahmride.Domain.Data.DistanceLocation
+import com.simpdev.sahmride.Domain.Data.UserPrice
+import com.simpdev.sahmride.Domain.Data.mapStyle
 import com.simpdev.sahmride.Presentation.Navigation.NavigationViewModel
 import com.simpdev.sahmride.Presentation.Ride.RideEvent
 import com.simpdev.sahmride.Presentation.Ride.RideScreen
@@ -135,7 +145,14 @@ fun Pickup(
                         if(mapView == null || navigationViewModel.state.rideStatus == "cancelled")
                         {
                             mapView = MapView(it).apply {
-                                getMapboxMap().loadStyleUri(Style.MAPBOX_STREETS){
+                                getMapboxMap().loadStyleUri(
+                                    if(mapStyle == "Dark")
+                                        "mapbox://styles/softchunck/cladvz5h5000614l826zzjojd"
+                                    else if(mapStyle == "Light")
+                                        "mapbox://styles/softchunck/clbahksoh000214pd2umczega"
+                                    else
+                                        Style.MAPBOX_STREETS
+                                ){
                                     cameraOptions {
                                         zoom(19.0)
                                     }
@@ -362,12 +379,12 @@ fun Pickup(
                     navigationViewModel = navigationViewModel,
                     distance = distanceGlobal,
                     duration = durationGlobal,
-                    innerPadding = innerPadding
                 ) }
         }
     }
 }
 
+@SuppressLint("SuspiciousIndentation")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Routeinfo(context: Context,viewModel: RideViewModel,navigationViewModel: NavigationViewModel)
@@ -473,120 +490,133 @@ fun Routeinfo(context: Context,viewModel: RideViewModel,navigationViewModel: Nav
     Column(
         modifier = Modifier
             .fillMaxSize(),
-        verticalArrangement = Arrangement.Top,
+        verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val df = DecimalFormat("#.##")
             df.roundingMode = RoundingMode.DOWN
-        ElevatedCard(
+
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-        ) {
-            Row(
+                .fillMaxHeight(0.7f)
+                .background(
+                    color = MaterialTheme.colorScheme.background,
+                    shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp)
+                )
+                .verticalScroll(state = rememberScrollState(), enabled = true),
+            horizontalAlignment = Alignment.CenterHorizontally
+            ){
+            Text(
+                modifier = Modifier.padding(vertical = 15.dp),
+                text = "Ride Details",
+                fontSize = 5.em,
+                fontWeight = FontWeight.SemiBold
+                )
+            Row (
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .background(
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                    .padding(vertical = 9.dp)
+                    .fillMaxWidth(0.8f),
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceEvenly
-            )
-            {
-                Column(modifier = Modifier
-                    .padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        Icons.Filled.Timeline, contentDescription = "Ride",
-                        modifier = Modifier
-                            .width(50.dp)
-                            .height(50.dp)
-                    )
-                    Text(text = (df.format(distance/1000)).toString()+"km" )
-                }
-                Column(modifier = Modifier
-                    .padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        Icons.Filled.Timer, contentDescription = "Ride",
-                        modifier = Modifier
-                            .width(50.dp)
-                            .height(50.dp)
-                    )
-                    Text(text = ((duration/3600).toInt()).toString()+"hr "+(((duration % 3600) / 60).roundToInt()).toString()+"min" )
-                }
+            ){
+                Image(
+                    painter = painterResource(id = R.drawable.ridedetails),
+                    modifier = Modifier
+                        .width(32.dp)
+                        .height(32.dp)
+                    ,
+                    contentScale = ContentScale.Crop,
+                    contentDescription = ""
+                )
+                Text(modifier = Modifier.padding( vertical = 10.dp),text = (df.format(distance/1000)).toString()+"km  ", fontWeight = FontWeight.SemiBold )
+                Text(text = ((duration/3600).toInt()).toString()+"hr "+(((duration % 3600) / 60).roundToInt()).toString()+"min", fontWeight = FontWeight.SemiBold )
             }
-        }
-
         if(!searchdriver){
-            ElevatedButton(
-                modifier = Modifier
-                    .fillMaxWidth(),
+            Button(
                 onClick = {
                 var driversRef = database.reference.child("driversLocation")
                 driversRef.get()
                     .addOnSuccessListener {
-                        it.children.forEach {
-                            var avalibleDriver = AvalibleDriverData(driverUid = it.key.toString())
-                                if(it.child("Active").value.toString() == "true" && it.child("lng").value != null && it.child("lat").value != null)
+                        it.children.forEach { driver ->
+                            var avalibleDriver = AvalibleDriverData(driverUid = driver.key.toString())
+                                if(driver.child("Active").value.toString() == "true" && driver.child("lng").value != null && driver.child("lat").value != null)
                                 {
-                                    if((it.child("availableSeats").value.toString()).toInt() > it.child("users").childrenCount)
+                                    if((driver.child("availableSeats").value.toString()).toInt() > driver.child("users").childrenCount)
                                     {
                                         val locations:MutableList<DistanceLocation> = emptyList<DistanceLocation>().toMutableList()
 
                                         var driverLocation = Point.fromLngLat(
-                                            it.child("lng").value.toString().toDouble(),
-                                            it.child("lat").value.toString().toDouble()
+                                            driver.child("lng").value.toString().toDouble(),
+                                            driver.child("lat").value.toString().toDouble()
                                         )
                                         locations.add(DistanceLocation(driverLocation))
                                         locations.add(DistanceLocation(pickupLocation!!))
                                         locations.add(DistanceLocation(destinationLocation!!))
 
-                                        Log.d("ChildCount",it.child("users").childrenCount.toString())
-                                        if(it.child("users").childrenCount > 0)
-                                        {
-                                            var additionlDistance:Double = 0.0
-                                            var additionlDuration:Double = 0.0
-                                            it.child("users").children.forEach {
-                                                val ref = db.collection("ridesDetail").document(it.key!!)
-                                                ref.get().addOnSuccessListener { result ->
-                                                    if(result != null ){
-                                                        locations.add(
-                                                            DistanceLocation(
-                                                                locationPoint = Point.fromLngLat(result.get("pickupLng") as Double,result.get("pickupLat") as Double)
-                                                            )
-                                                        )
-                                                        locations.add(
-                                                            DistanceLocation(
-                                                                locationPoint = Point.fromLngLat(result.get("destinationLng") as Double,result.get("destinationLat") as Double)
-                                                            )
-                                                        )
-                                                        mapNav.requestRoutes( RouteOptions.builder()
-                                                            .applyDefaultNavigationOptions(DirectionsCriteria.PROFILE_DRIVING_TRAFFIC)
-                                                            .coordinatesList(listOf(
-                                                                locations[0].locationPoint,locations[3].locationPoint,locations[4].locationPoint,
-                                                            ))
-                                                            .build(),
-                                                            object  : NavigationRouterCallback {
-                                                                override fun onCanceled(
-                                                                    routeOptions: RouteOptions,
-                                                                    routerOrigin: RouterOrigin
-                                                                ) {}
-                                                                override fun onFailure(
-                                                                    reasons: List<RouterFailure>,
-                                                                    routeOptions: RouteOptions
-                                                                ) {
-                                                                    Log.d("Failure : ",reasons.toString())
-                                                                }
-                                                                override fun onRoutesReady(
-                                                                    routes: List<NavigationRoute>,
-                                                                    routerOrigin: RouterOrigin
-                                                                ) {
-                                                                    GsonBuilder().setPrettyPrinting().create()
-                                                                    val json = JsonParser.parseString(routes[0].directionsRoute.toJson())
-                                                                    val jsonObj = json.asJsonObject
-                                                                    additionlDistance = (df.format(jsonObj.get("distance").asDouble/1000)).toDouble()
+                                        mapNav.requestRoutes( RouteOptions.builder()
+                                            .applyDefaultNavigationOptions(DirectionsCriteria.PROFILE_DRIVING_TRAFFIC)
+                                            .coordinatesList(
+                                                listOf(driverLocation,
+                                                pickupLocation,
+                                                destinationLocation)
+                                            )
+                                            .build(),
+                                            object  : NavigationRouterCallback {
+                                                override fun onCanceled(
+                                                    routeOptions: RouteOptions,
+                                                    routerOrigin: RouterOrigin
+                                                ) {}
+
+                                                override fun onFailure(
+                                                    reasons: List<RouterFailure>,
+                                                    routeOptions: RouteOptions
+                                                ) {
+                                                    Log.d("Failure : ",reasons.toString())
+                                                }
+
+                                                override fun onRoutesReady(
+                                                    routes: List<NavigationRoute>,
+                                                    routerOrigin: RouterOrigin
+                                                ) {
+                                                    // GSON instance used only to print the response prettily
+                                                    GsonBuilder().setPrettyPrinting().create()
+                                                    val json = JsonParser.parseString(routes[0].directionsRoute.toJson())
+                                                    val jsonObj = json.asJsonObject
+                                                    avalibleDriver.price = ((df.format(jsonObj.get("distance").asDouble/1000)).toDouble() * fulePerKm * priceOfFule).roundToInt()
+                                                    if(driver.child("users").childrenCount > 0)
+                                                    {
+                                                        var priceOtherUser:Int = 0
+                                                        var additionlDistance:Double = 0.0
+                                                        var additionlDuration:Double = 0.0
+                                                        driver.child("users").children.forEach {
+                                                            val ref = db.collection("ridesDetail").document(it.key!!)
+                                                            avalibleDriver.otherUsers = UserPrice(userUid = it.key!!)
+                                                            ref.get().addOnSuccessListener { result ->
+                                                                if(result != null ){
+                                                                    locations.add(
+                                                                        DistanceLocation(
+                                                                            locationPoint = Point.fromLngLat(result.get("pickupLng") as Double,result.get("pickupLat") as Double)
+                                                                        )
+                                                                    )
+                                                                    locations.add(
+                                                                        DistanceLocation(
+                                                                            locationPoint = Point.fromLngLat(result.get("destinationLng") as Double,result.get("destinationLat") as Double)
+                                                                        )
+                                                                    )
+                                                                    priceOtherUser = (result.get("price").toString()).toInt()
+                                                                    val totalprice = avalibleDriver.price + priceOtherUser
+                                                                    val percOther:Double = (priceOtherUser.toDouble()/totalprice.toDouble())
+                                                                    val percCurrent:Double = (avalibleDriver.price.toDouble()/totalprice.toDouble())
+
                                                                     mapNav.requestRoutes( RouteOptions.builder()
                                                                         .applyDefaultNavigationOptions(DirectionsCriteria.PROFILE_DRIVING_TRAFFIC)
                                                                         .coordinatesList(listOf(
-                                                                            locations[0].locationPoint,locations[1].locationPoint
+                                                                            locations[0].locationPoint,locations[3].locationPoint,locations[4].locationPoint,
                                                                         ))
                                                                         .build(),
                                                                         object  : NavigationRouterCallback {
@@ -604,18 +634,14 @@ fun Routeinfo(context: Context,viewModel: RideViewModel,navigationViewModel: Nav
                                                                                 routes: List<NavigationRoute>,
                                                                                 routerOrigin: RouterOrigin
                                                                             ) {
-                                                                                // GSON instance used only to print the response prettily
                                                                                 GsonBuilder().setPrettyPrinting().create()
                                                                                 val json = JsonParser.parseString(routes[0].directionsRoute.toJson())
                                                                                 val jsonObj = json.asJsonObject
-                                                                                avalibleDriver.distance = (df.format(jsonObj.get("distance").asDouble/1000)).toString()
-                                                                                avalibleDriver.duration = ((jsonObj.get("duration").asDouble/3600).toInt()).toString()+"hr "+(((jsonObj.get("duration").asDouble % 3600) / 60).roundToInt()).toString()+"min"
-                                                                                locations[1].distance = (df.format(jsonObj.get("distance").asDouble/1000)).toDouble()
-//                                                                    additionlDuration = jsonObj.get("duration").asDouble
+                                                                                additionlDistance = (df.format(jsonObj.get("distance").asDouble/1000)).toDouble()
                                                                                 mapNav.requestRoutes( RouteOptions.builder()
                                                                                     .applyDefaultNavigationOptions(DirectionsCriteria.PROFILE_DRIVING_TRAFFIC)
                                                                                     .coordinatesList(listOf(
-                                                                                        locations[0].locationPoint,locations[2].locationPoint
+                                                                                        locations[0].locationPoint,locations[1].locationPoint
                                                                                     ))
                                                                                     .build(),
                                                                                     object  : NavigationRouterCallback {
@@ -637,13 +663,14 @@ fun Routeinfo(context: Context,viewModel: RideViewModel,navigationViewModel: Nav
                                                                                             GsonBuilder().setPrettyPrinting().create()
                                                                                             val json = JsonParser.parseString(routes[0].directionsRoute.toJson())
                                                                                             val jsonObj = json.asJsonObject
-
-                                                                                            locations[2].distance = (df.format(jsonObj.get("distance").asDouble/1000)).toDouble()
+                                                                                            avalibleDriver.distance = (df.format(jsonObj.get("distance").asDouble/1000)).toString()
+                                                                                            avalibleDriver.duration = ((jsonObj.get("duration").asDouble/3600).toInt()).toString()+"hr "+(((jsonObj.get("duration").asDouble % 3600) / 60).roundToInt()).toString()+"min"
+                                                                                            locations[1].distance = (df.format(jsonObj.get("distance").asDouble/1000)).toDouble()
 //                                                                    additionlDuration = jsonObj.get("duration").asDouble
                                                                                             mapNav.requestRoutes( RouteOptions.builder()
                                                                                                 .applyDefaultNavigationOptions(DirectionsCriteria.PROFILE_DRIVING_TRAFFIC)
                                                                                                 .coordinatesList(listOf(
-                                                                                                    locations[0].locationPoint,locations[3].locationPoint
+                                                                                                    locations[0].locationPoint,locations[2].locationPoint
                                                                                                 ))
                                                                                                 .build(),
                                                                                                 object  : NavigationRouterCallback {
@@ -666,11 +693,12 @@ fun Routeinfo(context: Context,viewModel: RideViewModel,navigationViewModel: Nav
                                                                                                         val json = JsonParser.parseString(routes[0].directionsRoute.toJson())
                                                                                                         val jsonObj = json.asJsonObject
 
-                                                                                                        locations[3].distance = (df.format(jsonObj.get("distance").asDouble/1000)).toDouble()
+                                                                                                        locations[2].distance = (df.format(jsonObj.get("distance").asDouble/1000)).toDouble()
+//                                                                    additionlDuration = jsonObj.get("duration").asDouble
                                                                                                         mapNav.requestRoutes( RouteOptions.builder()
                                                                                                             .applyDefaultNavigationOptions(DirectionsCriteria.PROFILE_DRIVING_TRAFFIC)
                                                                                                             .coordinatesList(listOf(
-                                                                                                                locations[0].locationPoint,locations[4].locationPoint
+                                                                                                                locations[0].locationPoint,locations[3].locationPoint
                                                                                                             ))
                                                                                                             .build(),
                                                                                                             object  : NavigationRouterCallback {
@@ -693,15 +721,11 @@ fun Routeinfo(context: Context,viewModel: RideViewModel,navigationViewModel: Nav
                                                                                                                     val json = JsonParser.parseString(routes[0].directionsRoute.toJson())
                                                                                                                     val jsonObj = json.asJsonObject
 
-                                                                                                                    locations[4].distance = (df.format(jsonObj.get("distance").asDouble/1000)).toDouble()
-//                                                                    additionlDuration = jsonObj.get("duration").asDouble
-                                                                                                                    locations.sortBy {
-                                                                                                                        it.distance
-                                                                                                                    }
+                                                                                                                    locations[3].distance = (df.format(jsonObj.get("distance").asDouble/1000)).toDouble()
                                                                                                                     mapNav.requestRoutes( RouteOptions.builder()
                                                                                                                         .applyDefaultNavigationOptions(DirectionsCriteria.PROFILE_DRIVING_TRAFFIC)
                                                                                                                         .coordinatesList(listOf(
-                                                                                                                            locations[0].locationPoint,locations[1].locationPoint,locations[2].locationPoint,locations[3].locationPoint,locations[4].locationPoint,
+                                                                                                                            locations[0].locationPoint,locations[4].locationPoint
                                                                                                                         ))
                                                                                                                         .build(),
                                                                                                                         object  : NavigationRouterCallback {
@@ -724,26 +748,105 @@ fun Routeinfo(context: Context,viewModel: RideViewModel,navigationViewModel: Nav
                                                                                                                                 val json = JsonParser.parseString(routes[0].directionsRoute.toJson())
                                                                                                                                 val jsonObj = json.asJsonObject
 
-                                                                                                                                additionlDistance = ((df.format(jsonObj.get("distance").asDouble/1000)).toDouble()-additionlDistance)
-                                                                                                                                //                                                                    additionlDuration = jsonObj.get("duration").asDouble
-                                                                                                                                Log.d("additionlDistance",additionlDistance.toString())
-                                                                                                                                if(additionlDistance < 8){
-                                                                                                                                    var ref = db.collection("users").document(avalibleDriver.driverUid!!)
-                                                                                                                                    ref.get()
-                                                                                                                                        .addOnSuccessListener { result ->
-                                                                                                                                            if(result != null ){
-                                                                                                                                                avalibleDriver.firstName = result.get("firstName") as String
-                                                                                                                                                avalibleDriver.lastName = result.get("lastName") as String
-                                                                                                                                                avalibleDriver.gender = result.get("gender") as String
-                                                                                                                                                avalibleDriver.rating = (result.get("rating").toString()).toDouble()
-                                                                                                                                                avalibleDriver.waypoint = locations
-                                                                                                                                                driversSuggestion.add(avalibleDriver)
+                                                                                                                                locations[4].distance = (df.format(jsonObj.get("distance").asDouble/1000)).toDouble()
+//                                                                    additionlDuration = jsonObj.get("duration").asDouble
+                                                                                                                                locations.sortBy {
+                                                                                                                                    it.distance
+                                                                                                                                }
+                                                                                                                                mapNav.requestRoutes( RouteOptions.builder()
+                                                                                                                                    .applyDefaultNavigationOptions(DirectionsCriteria.PROFILE_DRIVING_TRAFFIC)
+                                                                                                                                    .coordinatesList(listOf(
+                                                                                                                                        locations[0].locationPoint,locations[1].locationPoint,locations[2].locationPoint,locations[3].locationPoint,locations[4].locationPoint,
+                                                                                                                                    ))
+                                                                                                                                    .build(),
+                                                                                                                                    object  : NavigationRouterCallback {
+                                                                                                                                        override fun onCanceled(
+                                                                                                                                            routeOptions: RouteOptions,
+                                                                                                                                            routerOrigin: RouterOrigin
+                                                                                                                                        ) {}
+                                                                                                                                        override fun onFailure(
+                                                                                                                                            reasons: List<RouterFailure>,
+                                                                                                                                            routeOptions: RouteOptions
+                                                                                                                                        ) {
+                                                                                                                                            Log.d("Failure : ",reasons.toString())
+                                                                                                                                        }
+                                                                                                                                        override fun onRoutesReady(
+                                                                                                                                            routes: List<NavigationRoute>,
+                                                                                                                                            routerOrigin: RouterOrigin
+                                                                                                                                        ) {
+                                                                                                                                            // GSON instance used only to print the response prettily
+                                                                                                                                            GsonBuilder().setPrettyPrinting().create()
+                                                                                                                                            val json = JsonParser.parseString(routes[0].directionsRoute.toJson())
+                                                                                                                                            val jsonObj = json.asJsonObject
+
+                                                                                                                                            additionlDistance = ((df.format(jsonObj.get("distance").asDouble/1000)).toDouble()-additionlDistance)
+                                                                                                                                            //                                                                    additionlDuration = jsonObj.get("duration").asDouble
+                                                                                                                                            Log.d("additionlDistance",additionlDistance.toString())
+                                                                                                                                            if(additionlDistance < 8){
+                                                                                                                                                var ref = db.collection("users").document(avalibleDriver.driverUid!!)
+                                                                                                                                                ref.get()
+                                                                                                                                                    .addOnSuccessListener { result ->
+                                                                                                                                                        if(result != null ){
+                                                                                                                                                            avalibleDriver.additionlDistance = additionlDistance
+                                                                                                                                                            avalibleDriver.firstName = result.get("firstName") as String
+                                                                                                                                                            avalibleDriver.vehicleModel = result.get("vehicleModel") as String
+                                                                                                                                                            avalibleDriver.vehicleName = result.get("vehicleName") as String
+                                                                                                                                                            avalibleDriver.lastName = result.get("lastName") as String
+                                                                                                                                                            avalibleDriver.gender = result.get("gender") as String
+                                                                                                                                                            avalibleDriver.rating = (result.get("rating").toString()).toDouble()
+                                                                                                                                                            avalibleDriver.carType = (result.get("carType").toString()).toInt()
+                                                                                                                                                            avalibleDriver.waypoint = locations
+
+                                                                                                                                                            mapNav.requestRoutes( RouteOptions.builder()
+                                                                                                                                                                .applyDefaultNavigationOptions(DirectionsCriteria.PROFILE_DRIVING_TRAFFIC)
+                                                                                                                                                                .coordinatesList(
+                                                                                                                                                                    listOf(
+                                                                                                                                                                        locations[0].locationPoint,
+                                                                                                                                                                        locations[1].locationPoint,
+                                                                                                                                                                        locations[2].locationPoint,
+                                                                                                                                                                        locations[3].locationPoint,
+                                                                                                                                                                        locations[4].locationPoint,
+                                                                                                                                                                        )
+                                                                                                                                                                )
+                                                                                                                                                                .build(),
+                                                                                                                                                                object  : NavigationRouterCallback {
+                                                                                                                                                                    override fun onCanceled(
+                                                                                                                                                                        routeOptions: RouteOptions,
+                                                                                                                                                                        routerOrigin: RouterOrigin
+                                                                                                                                                                    ) {}
+
+                                                                                                                                                                    override fun onFailure(
+                                                                                                                                                                        reasons: List<RouterFailure>,
+                                                                                                                                                                        routeOptions: RouteOptions
+                                                                                                                                                                    ) {
+                                                                                                                                                                        Log.d("Failure : ",reasons.toString())
+                                                                                                                                                                    }
+
+                                                                                                                                                                    override fun onRoutesReady(
+                                                                                                                                                                        routes: List<NavigationRoute>,
+                                                                                                                                                                        routerOrigin: RouterOrigin
+                                                                                                                                                                    ) {
+                                                                                                                                                                        // GSON instance used only to print the response prettily
+                                                                                                                                                                        GsonBuilder().setPrettyPrinting().create()
+                                                                                                                                                                        val json = JsonParser.parseString(routes[0].directionsRoute.toJson())
+                                                                                                                                                                        val jsonObj = json.asJsonObject
+                                                                                                                                                                        val newTotalPrice = ((df.format(jsonObj.get("distance").asDouble/1000)).toDouble() * fulePerKm * priceOfFule).roundToInt()
+                                                                                                                                                                        priceOtherUser = (percOther * newTotalPrice).roundToInt()
+                                                                                                                                                                        avalibleDriver.otherUsers!!.price = priceOtherUser
+                                                                                                                                                                        avalibleDriver.price = (percCurrent * newTotalPrice).roundToInt()
+                                                                                                                                                                        driversSuggestion.add(avalibleDriver)
+                                                                                                                                                                    }
+                                                                                                                                                                }
+                                                                                                                                                            )
+                                                                                                                                                        }
+                                                                                                                                                    }
+                                                                                                                                                    .addOnFailureListener { exception ->
+                                                                                                                                                        Log.w( "Error", "Error getting documents.", exception)
+                                                                                                                                                    }
                                                                                                                                             }
                                                                                                                                         }
-                                                                                                                                        .addOnFailureListener { exception ->
-                                                                                                                                            Log.w( "Error", "Error getting documents.", exception)
-                                                                                                                                        }
-                                                                                                                                }
+                                                                                                                                    }
+                                                                                                                                )
                                                                                                                             }
                                                                                                                         }
                                                                                                                     )
@@ -761,70 +864,74 @@ fun Routeinfo(context: Context,viewModel: RideViewModel,navigationViewModel: Nav
                                                                     )
                                                                 }
                                                             }
+                                                        }
+
+                                                        avalibleDriver.location = driverLocation
+                                                    }
+                                                    else
+                                                    {
+                                                        locations[2].distance = (df.format(distance/1000)).toDouble()
+                                                        avalibleDriver.location = driverLocation
+                                                        mapNav.requestRoutes( RouteOptions.builder()
+                                                            .applyDefaultNavigationOptions(DirectionsCriteria.PROFILE_DRIVING_TRAFFIC)
+                                                            .coordinatesList(listOf(
+                                                                pickupLocation.let { it?.let { it1 -> Point.fromLngLat(it1.longitude(),it.latitude()) } },
+                                                                driverLocation.let { it?.let { it1 -> Point.fromLngLat(it1.longitude(),it.latitude()) } }))
+                                                            .build(),
+                                                            object  : NavigationRouterCallback {
+                                                                override fun onCanceled(
+                                                                    routeOptions: RouteOptions,
+                                                                    routerOrigin: RouterOrigin
+                                                                ) {
+
+                                                                }
+
+                                                                override fun onFailure(
+                                                                    reasons: List<RouterFailure>,
+                                                                    routeOptions: RouteOptions
+                                                                ) {
+                                                                    Log.d("Failure : ",reasons.toString())
+                                                                }
+
+                                                                override fun onRoutesReady(
+                                                                    routes: List<NavigationRoute>,
+                                                                    routerOrigin: RouterOrigin
+                                                                ) {
+                                                                    // GSON instance used only to print the response prettily
+                                                                    GsonBuilder().setPrettyPrinting().create()
+                                                                    val json = JsonParser.parseString(routes[0].directionsRoute.toJson())
+                                                                    val jsonObj = json.asJsonObject
+
+                                                                    avalibleDriver.distance = (df.format(jsonObj.get("distance").asDouble/1000)).toString()
+                                                                    avalibleDriver.duration = ((jsonObj.get("duration").asDouble/3600).toInt()).toString()+"hr "+(((jsonObj.get("duration").asDouble % 3600) / 60).roundToInt()).toString()+"min"
+                                                                    locations[1].distance = (df.format(jsonObj.get("distance").asDouble/1000)).toDouble()
+                                                                    var ref = db.collection("users").document(avalibleDriver.driverUid!!)
+                                                                    ref.get()
+                                                                        .addOnSuccessListener { result ->
+                                                                            if(result != null ){
+                                                                                avalibleDriver.firstName = result.get("firstName") as String
+                                                                                avalibleDriver.vehicleModel = result.get("vehicleModel") as String
+                                                                                avalibleDriver.vehicleName = result.get("vehicleName") as String
+                                                                                avalibleDriver.lastName = result.get("lastName") as String
+                                                                                avalibleDriver.gender = result.get("gender") as String
+                                                                                avalibleDriver.rating = (result.get("rating").toString()).toDouble()
+                                                                                avalibleDriver.carType = (result.get("carType").toString()).toInt()
+                                                                                avalibleDriver.waypoint = locations
+                                                                                driversSuggestion.add(avalibleDriver)
+                                                                            }
+                                                                        }
+                                                                        .addOnFailureListener { exception ->
+                                                                            Log.w( "Error", "Error getting documents.", exception)
+                                                                        }
+                                                                }
+                                                            }
                                                         )
                                                     }
                                                 }
                                             }
+                                        )
+                                        Log.d("ChildCount",driver.child("users").childrenCount.toString())
 
-                                            avalibleDriver.location = driverLocation
-
-                                        }
-                                        else
-                                        {
-                                            locations[2].distance = (df.format(distance/1000)).toDouble()
-                                            avalibleDriver.location = driverLocation
-                                            mapNav.requestRoutes( RouteOptions.builder()
-                                                .applyDefaultNavigationOptions(DirectionsCriteria.PROFILE_DRIVING_TRAFFIC)
-                                                .coordinatesList(listOf(
-                                                    pickupLocation.let { it?.let { it1 -> Point.fromLngLat(it1.longitude(),it.latitude()) } },
-                                                    driverLocation.let { it?.let { it1 -> Point.fromLngLat(it1.longitude(),it.latitude()) } }))
-                                                .build(),
-                                                object  : NavigationRouterCallback {
-                                                    override fun onCanceled(
-                                                        routeOptions: RouteOptions,
-                                                        routerOrigin: RouterOrigin
-                                                    ) {
-
-                                                    }
-
-                                                    override fun onFailure(
-                                                        reasons: List<RouterFailure>,
-                                                        routeOptions: RouteOptions
-                                                    ) {
-                                                        Log.d("Failure : ",reasons.toString())
-                                                    }
-
-                                                    override fun onRoutesReady(
-                                                        routes: List<NavigationRoute>,
-                                                        routerOrigin: RouterOrigin
-                                                    ) {
-                                                        // GSON instance used only to print the response prettily
-                                                        GsonBuilder().setPrettyPrinting().create()
-                                                        val json = JsonParser.parseString(routes[0].directionsRoute.toJson())
-                                                        val jsonObj = json.asJsonObject
-
-                                                        avalibleDriver.distance = (df.format(jsonObj.get("distance").asDouble/1000)).toString()
-                                                        avalibleDriver.duration = ((jsonObj.get("duration").asDouble/3600).toInt()).toString()+"hr "+(((jsonObj.get("duration").asDouble % 3600) / 60).roundToInt()).toString()+"min"
-                                                        locations[1].distance = (df.format(jsonObj.get("distance").asDouble/1000)).toDouble()
-                                                        var ref = db.collection("users").document(avalibleDriver.driverUid!!)
-                                                        ref.get()
-                                                            .addOnSuccessListener { result ->
-                                                                if(result != null ){
-                                                                    avalibleDriver.firstName = result.get("firstName") as String
-                                                                    avalibleDriver.lastName = result.get("lastName") as String
-                                                                    avalibleDriver.gender = result.get("gender") as String
-                                                                    avalibleDriver.rating = (result.get("rating").toString()).toDouble()
-                                                                    avalibleDriver.waypoint = locations
-                                                                    driversSuggestion.add(avalibleDriver)
-                                                                }
-                                                            }
-                                                            .addOnFailureListener { exception ->
-                                                                Log.w( "Error", "Error getting documents.", exception)
-                                                            }
-                                                    }
-                                                }
-                                            )
-                                        }
                                     }
                                 }
                             }
@@ -842,18 +949,39 @@ fun Routeinfo(context: Context,viewModel: RideViewModel,navigationViewModel: Nav
                         color = Color.Gray)
                     },
                     leadingContent = {
-                        Icon(
-                            Icons.Filled.ElectricCar,
-                            contentDescription = "Location"
+                        Image(
+                            painter = painterResource(id = when(suggestion.carType){
+                                1 -> R.drawable.icon1
+                                2 -> R.drawable.icon2
+                                3 -> R.drawable.icon3
+                                4 -> R.drawable.icon4
+                                5 -> R.drawable.icon5
+                                6 -> R.drawable.icon6
+                                else -> {R.drawable.icon6}
+                            }),
+                            modifier = Modifier
+                                .width(50.dp)
+                                .height(50.dp)
+                                .background(
+                                    color = Color.White,
+                                    shape = RoundedCornerShape(20.dp)
+                                )
+                            ,
+                            contentScale = ContentScale.Crop,
+                            contentDescription = ""
                         )
                     },
                     trailingContent = {
-                        Icon(
-                            Icons.Filled.ArrowForward,
-                            contentDescription = "Select"
-                        )
+                                      Text(
+                                          text = "PKR "+suggestion.price.toString(),
+                                          fontSize = 4.em,
+                                          fontWeight = FontWeight.SemiBold,
+                                          color = MaterialTheme.colorScheme.onBackground
+                                      )
                     },
-                    colors = ListItemDefaults.colors(Color.White),
+                    colors = ListItemDefaults.colors(
+                        containerColor = Color.Transparent
+                    ),
                     modifier = Modifier
                         .clickable(
                             enabled = true,
@@ -861,10 +989,14 @@ fun Routeinfo(context: Context,viewModel: RideViewModel,navigationViewModel: Nav
                                 viewModel.onEvent(RideEvent.driverProfile(suggestion))
                             }
                         )
+                        .background(
+                            color = Color.Transparent
+                        )
                 )
-                Divider()
             }
+        }
         }
     }
 }
+
 

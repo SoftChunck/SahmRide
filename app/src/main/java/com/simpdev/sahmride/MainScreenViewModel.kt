@@ -6,7 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 
 class MainScreenViewModel:ViewModel() {
-    var state  by mutableStateOf(MainScreenState(currentScreen = CurrentScreen.SignIn))
+    var state  by mutableStateOf(MainScreenState(currentScreen = CurrentScreen.StartingPage))
     fun onEvent(event:MainScreenEvents){
         when(event){
             is MainScreenEvents.ChangeScreen -> {

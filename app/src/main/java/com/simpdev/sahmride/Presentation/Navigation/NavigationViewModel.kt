@@ -3,6 +3,7 @@
 package com.simpdev.sahmride.Presentation.Navigation
 
 import Domain.Data.*
+import android.annotation.SuppressLint
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
@@ -11,7 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.ViewModel
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -21,15 +21,18 @@ import com.simpdev.sahmride.Domain.Data.KeyStatus
 import com.simpdev.sahmride.Domain.Data.UserData
 import com.simpdev.sahmride.Domain.RideDetails
 import com.simpdev.sahmride.R
+import io.getstream.chat.android.client.ChatClient
 import java.io.File
 import java.io.FileNotFoundException
-import kotlin.math.roundToInt
+
 
 class NavigationViewModel:ViewModel() {
     init{
         startLocationBroadcastService()
         waitForResponse()
-        listenForUsers()
+        if(userData.isDriver){
+            listenForUsers()
+        }
     }
     var state by mutableStateOf(NavigationState())
 
@@ -67,9 +70,15 @@ class NavigationViewModel:ViewModel() {
                         database.reference.child("driversLocation").child(auth.currentUser?.uid.toString()).child("waypoints").child(it.key.toString()).child("lat").setValue(it.child("lat").value)
                     }
                 }
-                database.reference.child("driversLocation").child(auth.currentUser?.uid.toString()).child("users").child(
-                    state.userUid!!
-                ).setValue((event.distance!!.toDouble()  * priceOfFule * fulePerKm).roundToInt())
+                database.reference.child("driversLocation").child(auth.currentUser?.uid.toString()).child("users").get().addOnSuccessListener {
+                    ChatClient.instance().channel("messaging:"+auth.currentUser!!.uid).addMembers(listOf(it.key.toString())).enqueue { result ->
+                        if (result.isSuccess) {
+                            Log.d("Channel","User Added")
+                        } else {
+                            Log.d("Channel",result.toString())
+                        }
+                    }
+                }
                 state = state.copy( userAccepted = true,currentScreen = NavigationScreen.RideAcceptedScreen)
 
             }
@@ -176,16 +185,17 @@ class NavigationViewModel:ViewModel() {
                     state = state.copy(usersAvalible = true, userUid = key.key)
                     val ref = db.collection("ridesDetail").document(key.key)
                     ref.get().addOnSuccessListener { result ->
-                        if(result != null ){
+                        if(result != null && result.get("pickupLng").toString() != null){
                             Log.d(key.key,result.get("pickupLng").toString())
                             userDetails.request =  result.get("request").toString()
                             userDetails.pickup = Point.fromLngLat(result.get("pickupLng") as Double,result.get("pickupLat") as Double)
                             userDetails.destination = Point.fromLngLat(result.get("destinationLng") as Double,result.get("destinationLat") as Double)
-                            userDetails.distance = result.get("distance") as String?
-                            userDetails.duration = result.get("duration") as String?
-                            userDetails.distanceFromDriver = result.get("distanceFromDriver") as String?
-                            userDetails.durationFromDriver = result.get("durationFromDriver") as String?
+                            userDetails.distance = result.get("distance").toString()
+                            userDetails.duration = result.get("duration").toString()
+                            userDetails.distanceFromDriver = result.get("distanceFromDriver").toString()
+                            userDetails.durationFromDriver = result.get("durationFromDriver").toString()
                             userDetails.request =  result.get("request").toString()
+                            userDetails.price = (result.get("price").toString()).toInt()
                             state.rideSharingRideDetails.add(userDetails)
                             if(userDetails.request.toString() == "pending"){
                                 state = state.copy(usersAvalible = true)
@@ -205,11 +215,6 @@ class NavigationViewModel:ViewModel() {
                             .setContentTitle(userData.firstName + " "+ userData.lastName)
                             .setContentText(state.distance +" "+ state.duration)
                             .setStyle(NotificationCompat.BigTextStyle())
-                    }
-                    if (notification != null && state.distance != null) {
-                        with(context?.let { NotificationManagerCompat.from(it) }) {
-                            this?.notify(1, notification.build())
-                        }
                     }
                 }
             }.addOnFailureListener { exception ->
@@ -244,10 +249,6 @@ class NavigationViewModel:ViewModel() {
                                 updateRideDetails(keys)
                             }
                         }
-//                        if(it.value.toString() == "0.0")
-//                            updateRideDetails(it.key.toString(),"pending")
-//                        else
-//                            updateRideDetails(it.key.toString(),"accepted")
                     }
                 }
             }
@@ -263,6 +264,7 @@ class NavigationViewModel:ViewModel() {
             keys.add(KeyStatus(key = "request"))
             db.collection("ridesDetail").document(it.uid).get().addOnSuccessListener {
                 val driverUid = it["driverUid"].toString()
+                state = state.copy(userUid = driverUid)
                 val refMyLocation = database.reference.child("driversLocation").child(driverUid).child("users")
                 refMyLocation.get().addOnCompleteListener {
                     it.addOnSuccessListener {
@@ -311,6 +313,7 @@ class NavigationViewModel:ViewModel() {
             }
         }
     }
+    @SuppressLint("LongLogTag")
     private fun extractRideDetails(keys:MutableList<KeyStatus>){
         Log.d("Keys",keys.toString())
         state.waypoints = emptyList<Point>().toMutableList()
@@ -391,13 +394,13 @@ class NavigationViewModel:ViewModel() {
                                 state.rideSharingUsers.add(rideSharingUser)
                                 if(currentkey.key == keys.get(keys.lastIndex).key)
                                 {
-                                    Log.d("Users Details Extraction","Completed")
+                                    Log.d("Users","Completed")
                                     state = state.copy(rideStatus = "accepted", currentScreen = NavigationScreen.UserAcceptedScreen)
                                 }
                             }.addOnFailureListener {
                                 if(currentkey.key == keys.get(keys.lastIndex).key)
                                 {
-                                    Log.d("Users Details Extraction","Completed")
+                                    Log.d("Usxtraction","Completed")
                                     state = state.copy(rideStatus = "accepted", currentScreen = NavigationScreen.UserAcceptedScreen)
                                 }
                                 Log.d("User Profile Loading Error","File Failed")

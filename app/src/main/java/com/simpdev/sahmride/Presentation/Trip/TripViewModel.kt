@@ -1,6 +1,12 @@
 package com.simpdev.sahmride.Presentation.Trip
 
-import Domain.Data.*
+import Domain.Data.auth
+import Domain.Data.context
+import Domain.Data.database
+import Domain.Data.db
+import Domain.Data.driverCurrentLocation
+import Domain.Data.storageRef
+import Domain.Data.userData
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
@@ -19,7 +25,6 @@ import com.simpdev.sahmride.Domain.Data.KeyStatus
 import com.simpdev.sahmride.Domain.RideDetails
 import com.simpdev.sahmride.R
 import java.io.File
-import kotlin.math.roundToInt
 
 class TripViewModel : ViewModel() {
     var state by mutableStateOf(TripState())
@@ -34,17 +39,31 @@ class TripViewModel : ViewModel() {
                 state = state.copy(currentScreen = TripScreen.TripHome)
             }
             is TripEvents.userAccepted -> {
-                database.reference.child("driversLocation").child(auth.currentUser?.uid.toString()).child("genratedWaypoints").get().addOnSuccessListener {
-                    database.reference.child("driversLocation").child(auth.currentUser?.uid.toString()).child("waypoints").setValue(null)
-                    it.children.forEach {
-                        database.reference.child("driversLocation").child(auth.currentUser?.uid.toString()).child("waypoints").child(it.key.toString()).child("lng").setValue(it.child("lng").value)
-                        database.reference.child("driversLocation").child(auth.currentUser?.uid.toString()).child("waypoints").child(it.key.toString()).child("lat").setValue(it.child("lat").value)
+                var acceptedByOther = true
+                db.collection("ridesDetail").document(event.distance!!).get().addOnSuccessListener { details ->
+                    state.rideSharingRideDetails.forEach {
+                            if(details.get(it.UserInfo.userUid!!).toString() == "pending")
+                            {
+                                acceptedByOther = false
+                            }
+                    }
+                    if(acceptedByOther){
+                        database.reference.child("driversLocation").child(auth.currentUser?.uid.toString()).child("genratedWaypoints").get().addOnSuccessListener {
+                            database.reference.child("driversLocation").child(auth.currentUser?.uid.toString()).child("waypoints").setValue(null)
+                            it.children.forEach {
+                                database.reference.child("driversLocation").child(auth.currentUser?.uid.toString()).child("waypoints").child(it.key.toString()).child("lng").setValue(it.child("lng").value)
+                                database.reference.child("driversLocation").child(auth.currentUser?.uid.toString()).child("waypoints").child(it.key.toString()).child("lat").setValue(it.child("lat").value)
+                            }
+                        }
+                        database.reference.child("driversLocation").child(auth.currentUser!!.uid).child("genratedPrices").get().addOnSuccessListener {
+                            database.reference.child("driversLocation").child(auth.currentUser!!.uid).child("users").setValue(null)
+                            it.children.forEach {
+                                database.reference.child("driversLocation").child(auth.currentUser!!.uid).child("users").child(it.key.toString()).setValue(it.value)
+                            }
+                        }
                     }
                 }
-                database.reference.child("driversLocation").child(auth.currentUser?.uid.toString()).child("users").child(
-                    state.userUid!!
-                ).setValue((event.distance!!.toDouble()  * priceOfFule * fulePerKm).roundToInt())
-                state = state.copy( usersAvalible = false)
+                state = state.copy( usersAvalible = false, refresh = state.refresh+1)
             }
         }
     }
@@ -72,6 +91,7 @@ class TripViewModel : ViewModel() {
                     userDetails.UserInfo.firstName = result.get("firstName") as String?
                     userDetails.UserInfo.lastName = result.get("lastName") as String?
                     userDetails.UserInfo.gender = result.get("gender") as String?
+                    userDetails.UserInfo.rating = result.get("rating").toString().toDouble()
                     state = state.copy(usersAvalible = true, userUid = key.key)
                     val ref = db.collection("ridesDetail").document(key.key)
                     ref.get().addOnSuccessListener { result ->
@@ -85,6 +105,7 @@ class TripViewModel : ViewModel() {
                             userDetails.distanceFromDriver = result.get("distanceFromDriver") as String?
                             userDetails.durationFromDriver = result.get("durationFromDriver") as String?
                             userDetails.request =  result.get("request").toString()
+                            userDetails.price = (result.get("price").toString()).toInt()
                             state.rideSharingRideDetails.add(userDetails)
                             if(userDetails.request.toString() == "pending"){
                                 state = state.copy(usersAvalible = true)

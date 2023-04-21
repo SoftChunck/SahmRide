@@ -16,6 +16,7 @@ data class RideDetails(
     val rating:Int? = null,
     var pickup: Point? = null,
     var destination: Point? = null,
+    var price: Int = 0,
 //    var userPic: ImageBitmap? = null,
     var distanceFromDriver:String? = null,
     var durationFromDriver:String? = null,
