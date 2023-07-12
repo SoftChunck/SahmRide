@@ -4,7 +4,7 @@ Welcome to SahmRide! This Android application is built using Jetpack Compose, Ko
 
 [WebApplication Code](https://github.com/SoftChunck/SahmRide.git)
 
-[StreamChat Api](https://github.com/SoftChunck/sahmrideHosting.git)
+[StreamChat Token Api Code](https://github.com/SoftChunck/StreakChatTokenAPI.git)
 
 ## Tools Used
 
