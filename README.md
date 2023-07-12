@@ -1,6 +1,10 @@
 # SahmRide
 
-Welcome to SahmRide! This Android application is built using Jetpack Compose, Kotlin, Mapbox, and StreamChat. SahmRide provides a user-friendly interface for ride-sharing services, allowing users to request and offer rides in real-time.
+Welcome to SahmRide! This Android application is built using Jetpack Compose, Kotlin, Mapbox, and StreamChat. SahmRide provides a user-friendly interface for ride-sharing services, allowing users to request and offer rides in real-time.\
+
+[WebApplication Code](https://github.com/SoftChunck/SahmRide.git).\
+
+[StreamChat Api](https://github.com/SoftChunck/sahmrideHosting.git)
 
 ## Tools Used
 
@@ -23,8 +27,4 @@ To run SahmRide locally, make sure you have the following prerequisites installe
 Clone this repository to your local machine:
 
 ```bash
-git clone https://github.com/SoftChunck/SahmRide.git.\
-
-[WebApplication Code](https://github.com/SoftChunck/SahmRide.git).\
-
-[StreamChat Api](https://github.com/SoftChunck/sahmrideHosting.git)
+git clone https://github.com/SoftChunck/SahmRide.git
