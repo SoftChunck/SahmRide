@@ -18,6 +18,11 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,7 +71,6 @@ fun DriverProfileUii(
 ){
     val viewModel = viewModel<ProfileViewModel>()
     val state = viewModel.state
-
     LaunchedEffect(key1 = 1, block = {
 //        viewModel.resetState()
         viewModel.loadProfilePic(driverData.driverUid!!)
@@ -497,11 +501,41 @@ fun DriverProfileUi(
 ){
     val viewModel = viewModel<ProfileViewModel>()
     val state = viewModel.state
+
+    var currentIndex by remember { mutableStateOf(99) }
+    var seatsList = remember {
+        listOf("Avalible","Avalible","Avalible","Avalible").toMutableStateList()    }
+    var orignalSeatList = remember {
+        listOf("Avalible","Avalible","Avalible","Avalible").toMutableStateList()    }
+    LaunchedEffect(key1 = 1, block = {
+        val setDetails = database.reference.child("driversLocation").child(driverData.driverUid!!).child("seatsDetail")
+        setDetails.get().addOnSuccessListener { dataSnapshot ->
+            if(dataSnapshot.exists()){
+                dataSnapshot.children.forEach {
+                    seatsList.set(it.key.toString().toInt(),it.value.toString())
+                    orignalSeatList.set(it.key.toString().toInt(),it.value.toString())
+                }
+                seatsList.set(0, driverData.gender.toString())
+            }
+        }
+    })
     LaunchedEffect(key1 = 1, block = {
 //        viewModel.resetState()
         viewModel.loadProfilePic(driverData.driverUid!!)
         viewModel.loadVehiclePics(driverData.driverUid!!)
         viewModel.loadReviews(driverData.driverUid!!)
+    })
+    LaunchedEffect(key1 = currentIndex, block = {
+        if(currentIndex != 99){
+            for(i in 0..3){
+                if(i == currentIndex){
+                    seatsList[currentIndex] = userData.gender.toString()
+                }
+                else{
+                    seatsList[i] = orignalSeatList[i]
+                }
+            }
+        }
     })
     val backPressDispatcher = LocalOnBackPressedDispatcherOwner.current!!.onBackPressedDispatcher
     backPressDispatcher.addCallback(object : OnBackPressedCallback(true) {
@@ -512,9 +546,11 @@ fun DriverProfileUi(
     Column(
         modifier = Modifier
             .background(color = MaterialTheme.colorScheme.background)
-            .padding(10.dp)
+            .padding(top=10.dp,start=10.dp,end=10.dp,bottom=50.dp)
+            .verticalScroll(enabled = true, state = rememberScrollState())
             .fillMaxSize(),
         verticalArrangement = Arrangement.Top,
+
     ) {
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly,
@@ -532,6 +568,7 @@ fun DriverProfileUi(
                     driverUid =driverData.driverUid
                     database.reference.child("driversLocation").child(driverData.driverUid!!).child("users").get()
                         .addOnSuccessListener {
+                            database.reference.child("driversLocation").child(driverData.driverUid!!).child("seatsDetail").child(currentIndex.toString()).setValue(userData.gender)
                             if(it.childrenCount > 0)
                             {
                                 it.children.forEach {
@@ -694,10 +731,220 @@ fun DriverProfileUi(
                 }
             )
         }
+        Row(modifier = Modifier
+            .padding(10.dp)
+            .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ){
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically,
+                ){
+                    Column(
+                        modifier = Modifier.height(150.dp),
+                        verticalArrangement = Arrangement.SpaceEvenly,
+                        horizontalAlignment = Alignment.Start
+                    ){
+                        Text("Select Seat", fontSize = 6.em, fontWeight = FontWeight.SemiBold,modifier = Modifier.padding(start = 4.dp))
+                        Row{
+                            Button(onClick = {}, modifier = Modifier
+                                .size(20.dp),
+                                shape = RoundedCornerShape(2.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
+                            ) {
+                            }
+                            Text("Male",modifier = Modifier.padding(start = 4.dp))
+                        }
+                        Row{
+                            Button(onClick = {}, modifier = Modifier
+                                .size(20.dp),
+                                shape = RoundedCornerShape(2.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.secondary
+                                )
+                            ) {
+                            }
+                            Text("Female",modifier = Modifier.padding(start = 4.dp))
+                        }
+                        Row{
+                            Button(onClick = {}, modifier = Modifier
+                                .size(20.dp),
+                                shape = RoundedCornerShape(2.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.tertiary
+                                )
+                            ) {
+                            }
+                            Text("Available Seats",modifier = Modifier.padding(start = 4.dp))
+                        }
+                    }
+                    Column(){
+                        Image(painter = painterResource(id = R.drawable.seats), contentDescription = null,modifier = Modifier.height(290.dp))
+                        Column(
+                            modifier = Modifier
+                                .zIndex(99f)
+                                .offset(47.dp,(-175).dp)
+                        ) {
+                            Row(){
+                                Button(onClick = {
+                                }, modifier = Modifier
+                                    .size(40.dp)
+                                    .padding( 10.dp),
+                                    shape = RoundedCornerShape(2.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if(seatsList[1] == "Avalible")
+                                            MaterialTheme.colorScheme.tertiary
+                                        else if(seatsList[1] == "Male")
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.secondary ),
+                                ) {
+                                    Text("1",color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                }
+                                Button(onClick = {
+                                    if(seatsList[0] == "Avalible"){
+                                        currentIndex = 0
+                                    }
+                                }, modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(10.dp),
+                                    shape = RoundedCornerShape(2.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if(seatsList[0] == "Avalible")
+                                            MaterialTheme.colorScheme.tertiary
+                                        else if(seatsList[0] == "Male")
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.secondary ),
+                                ) {
+                                    Text("0",color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                }
+                            }
+                            Row(modifier = Modifier.padding(top = 10.dp)){
+                                Button(onClick = {
+                                    if(seatsList[2] == "Avalible"){
+                                        currentIndex = 2
+                                    }
+                                }, modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(10.dp),
+                                    shape = RoundedCornerShape(2.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if(seatsList[2] == "Avalible")
+                                            MaterialTheme.colorScheme.tertiary
+                                        else if(seatsList[2] == "Male")
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.secondary ),
+                                ) {
+                                    Text("2",color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                }
+                                Button(onClick = {
+                                    if(seatsList[3] == "Avalible"){
+                                        currentIndex = 3
+                                    }
+                                }, modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(10.dp),
+                                    shape = RoundedCornerShape(2.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor =if(seatsList[3] == "Avalible")
+                                            MaterialTheme.colorScheme.tertiary
+                                        else if(seatsList[3] == "Male")
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.secondary ),
+                                ) {
+                                    Text("3",color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if(driverData.otherUsers != null){
+            Text(text = "Other Users", fontWeight = FontWeight.SemiBold, fontSize = 5.em,modifier = Modifier
+                .offset(y=(-80).dp)
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset(y=(-70).dp),
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ){
+                    Image(
+                        modifier = Modifier
+                            .zIndex(1f)
+                            .width(70.dp)
+                            .height(70.dp)
+                            .padding(5.dp)
+                            .clip(shape = CircleShape),
+                        contentScale = ContentScale.Crop,
+                        painter = rememberAsyncImagePainter(driverData.otherUsers!!.profilePic),
+                        contentDescription = null,
+                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(text = "${driverData.otherUsers!!.firstName}", fontWeight = FontWeight.SemiBold, fontSize = 3.em, textAlign = TextAlign.Center)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center){
+                            Icon(
+                                modifier = Modifier.size(10.dp),
+                                imageVector = if (driverData.otherUsers!!.rating >= 1) Icons.Filled.Star else Icons.Filled.StarOutline,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                            Icon(
+                                modifier = Modifier.size(10.dp),
+                                imageVector = if (driverData.otherUsers!!.rating >= 2) Icons.Filled.Star else Icons.Filled.StarOutline,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                            Icon(
+                                modifier = Modifier.size(10.dp),
+                                imageVector = if (driverData.otherUsers!!.rating >= 3) Icons.Filled.Star else Icons.Filled.StarOutline,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                            Icon(
+                                modifier = Modifier.size(10.dp),
+                                imageVector = if (driverData.otherUsers!!.rating >= 4) Icons.Filled.Star else Icons.Filled.StarOutline,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                            Icon(
+                                modifier = Modifier.size(10.dp),
+                                imageVector = if (driverData.otherUsers!!.rating >= 5) Icons.Filled.Star else Icons.Filled.StarOutline,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                            Icon(modifier = Modifier.size(10.dp),imageVector = if(driverData.gender == "Male") Icons.Filled.Male else Icons.Filled.Female , contentDescription = null)
+                            Text(text = "${driverData.otherUsers!!.gender}",fontSize = 3.em)
+                        }
+                    }
+                }
+            }
+        }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(10.dp)
+                .offset(y=(-70).dp)
                 .border(border = BorderStroke(1.dp, Color.Gray), shape = RoundedCornerShape(4.dp))
         ){
             Row (
@@ -801,6 +1048,5 @@ fun DriverProfileUi(
                 }
             }
         }
-
     }
 }

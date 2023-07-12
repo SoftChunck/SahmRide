@@ -89,7 +89,7 @@ fun Navigation(
                                 .update("request","cancelled").addOnSuccessListener {
                                     Log.d("request","cancelled")
                                 }
-                            database.reference.child("driversLocation").child(state.userUid!!).child("users").setValue(null)
+                            database.reference.child("driversLocation").child(state.userUid!!).child("users").child(auth.currentUser!!.uid).setValue(null)
                             viewModel.onEvent(NavigationEvent.changeCurrentScreen(NavigationScreen.LoadingScreen))
                         }) {
                             Text("Cancel Request")
@@ -139,7 +139,6 @@ fun Navigation(
             )
         }
         is NavigationScreen.UserAcceptedScreen -> {
-
             Log.d("TripUser","User Accepted")
             TripUser(context = context,pickup = state.pickup,destination = state.destination,
                 listOf<String>(state.userUid!!),

@@ -245,7 +245,6 @@ fun TripUser(
             .build()
 
         val apiService = retrofit.create(ApiService::class.java)
-
         try {
             val response = apiService.getApiResponse(uid = auth.currentUser!!.uid)
             val token = response.token
@@ -282,7 +281,6 @@ fun TripUser(
 //        mapView?.let { flytoLocation(it, driverCurrentLocation) }
     }
     if(state.usersAvalible){
-
         state.rideSharingRideDetails.forEach {
             if(it.request == "pending" || it.request == "accepted")
             {
@@ -448,8 +446,10 @@ fun TripUser(
                                         .update(auth.currentUser!!.uid,"accepted").addOnSuccessListener {
                                             Log.d("request","Accepted")
                                         }
-                                    it.request = "accepted"
-                                    viewModel.onEvent(TripUserEvents.userAccepted(it.request))
+                                    db.collection("ridesDetail").document(it.UserInfo.userUid!!).get().addOnSuccessListener {req ->
+                                        it.request = req.get("request").toString()
+                                        viewModel.onEvent(TripUserEvents.userAccepted(it.request))
+                                    }
                                 }) {
                                     Text(text = "Accept")
                                 }
@@ -903,9 +903,12 @@ fun TripUser(
                                 .update("request","cancelled").addOnSuccessListener {
                                     Log.d("request","cancelled")
                                 }
-                            val ref = database.reference.child("driversLocation").child(userUids[0]!!).child("users").child(
-                                auth.currentUser!!.uid)
-                            ref.setValue(null)
+                            db.collection("ridesDetail").document(auth.currentUser!!.uid)
+                                .get().addOnSuccessListener { ride->
+                                    val ref = database.reference.child("driversLocation").child(ride.getString("driverUid").toString()).child("users").child(
+                                        auth.currentUser!!.uid)
+                                    ref.setValue(null)
+                                }
                             mapView?.onDestroy()
                             mapNav.onDestroy()
                             pickupLocation = null

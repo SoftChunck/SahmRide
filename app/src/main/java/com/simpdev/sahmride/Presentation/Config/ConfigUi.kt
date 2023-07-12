@@ -92,6 +92,11 @@ fun ConfigUi(){
                 auth.signOut()
                 val restart = Intent(context, MainScreen::class.java)
                 context?.startActivity(restart)
+//                val intent: Intent = context?.packageManager?.getLaunchIntentForPackage(context?.packageName!!)!!
+//                val componentName: ComponentName = intent.component!!
+//                val restartIntent: Intent = Intent.makeRestartActivityTask(componentName)
+//                context!!.startActivity(restartIntent)
+//                Runtime.getRuntime().exit(0)
             }) {
                 Text(text = "Logout")
                 Icon(imageVector = Icons.Filled.Logout, contentDescription = null)

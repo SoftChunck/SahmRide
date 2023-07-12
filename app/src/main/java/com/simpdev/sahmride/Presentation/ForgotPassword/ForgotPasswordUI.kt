@@ -59,7 +59,7 @@ fun ForgotPasswordUI(mainScreenViewModel: MainScreenViewModel){
                 .zIndex(2F)
                 .fillMaxWidth()
                 .fillMaxHeight()
-                .padding(bottom = 100.dp)
+                .padding(bottom = 200.dp)
                 .padding(horizontal = 15.dp),
             verticalArrangement = Arrangement.Bottom,
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -71,7 +71,7 @@ fun ForgotPasswordUI(mainScreenViewModel: MainScreenViewModel){
             Text(text = "Recover Password",
                 fontSize = TextUnit(7f, TextUnitType.Em),
                 fontWeight = FontWeight(700),
-                color = MaterialTheme.colorScheme.primary
+                color = Color.White
             )
 
             Spacer(modifier = Modifier

@@ -81,7 +81,6 @@ fun AppTheme(
     } else {
         DarkColors
     }
-
     MaterialTheme(
         colorScheme = colors,
         content = content

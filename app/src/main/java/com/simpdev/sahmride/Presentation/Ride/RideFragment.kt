@@ -596,6 +596,20 @@ fun Routeinfo(context: Context,viewModel: RideViewModel,navigationViewModel: Nav
                                                         driver.child("users").children.forEach {
                                                             val ref = db.collection("ridesDetail").document(it.key!!)
                                                             avalibleDriver.otherUsers = UserPrice(userUid = it.key!!)
+                                                            avalibleDriver.otherUsers = UserPrice(userUid = it.key!!)
+                                                            var orref = db.collection("users").document(it.key!!)
+                                                            orref.get()
+                                                                .addOnSuccessListener { result ->
+                                                                    if(result != null ) {
+                                                                        storageRef.child("images/${it.key!!}/profile").downloadUrl.addOnSuccessListener {
+                                                                            avalibleDriver.otherUsers!!.profilePic = it
+                                                                        }
+                                                                        avalibleDriver.otherUsers!!.firstName = result.get("firstName").toString()
+                                                                        avalibleDriver.otherUsers!!.lastName = result.get("lastName").toString()
+                                                                        avalibleDriver.otherUsers!!.gender = result.get("gender").toString()
+                                                                        avalibleDriver.otherUsers!!.rating = (result.get("rating").toString()).toDouble()
+                                                                    }
+                                                                }
                                                             ref.get().addOnSuccessListener { result ->
                                                                 if(result != null ){
                                                                     locations.add(

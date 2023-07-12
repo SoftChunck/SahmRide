@@ -84,8 +84,8 @@ class TripUserViewModel : ViewModel() {
         auth.currentUser?.let {
             db.collection("ridesDetail").document(it.uid).addSnapshotListener { value, error ->
                 if(value != null){
-                    database.reference.child("driversLocation").child(value["driverUid"].toString()).child("users").child(it.uid).removeValue()
                     if(value["request"] == "completed"){
+                        database.reference.child("driversLocation").child(value["driverUid"].toString()).child("users").child(it.uid).removeValue()
                         state = state.copy(currentScreen = TripUserScreen.ReviewScreen)
                     }
                 }
@@ -153,7 +153,7 @@ class TripUserViewModel : ViewModel() {
                 userDetails.UserInfo.gender = result.get("gender") as String?
                 val ref = db.collection("ridesDetail").document(key)
                 ref.get().addOnSuccessListener { result ->
-                    if(result != null ){
+                    if(result != null && result.get("pickupLng") != null){
                         userDetails.request =  result.get("request").toString()
                         userDetails.pickup = Point.fromLngLat(result.get("pickupLng") as Double,result.get("pickupLat") as Double)
                         userDetails.destination = Point.fromLngLat(result.get("destinationLng") as Double,result.get("destinationLat") as Double)

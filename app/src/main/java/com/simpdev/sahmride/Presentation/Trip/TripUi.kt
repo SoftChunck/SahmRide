@@ -165,8 +165,8 @@ fun TripUi(
                         if (result.isSuccess) {
                             Log.d("Chat","${token}")
                         } else {
-                            Log.d("Chat","Error")
-
+                            Log.d("Chat",result.toString())
+                            Log.d("Chat",token)
                         }
                     }
             }
@@ -427,7 +427,7 @@ fun TripUi(
                         }
                         Column(
                             modifier = Modifier
-                                .offset(0.dp,(-30.dp)),
+                                .offset(0.dp,(-10.dp)),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Row (
@@ -508,156 +508,6 @@ fun TripUi(
                     }
                 }
             }
-//            {
-//                Column(
-//                    modifier = Modifier
-//                        .zIndex(7f)
-//                        .fillMaxSize(),
-//                    verticalArrangement = Arrangement.Bottom
-//                ) {
-//                    Column(
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .fillMaxHeight(0.35f)
-//                            .background(
-//                                shape = RoundedCornerShape(
-//                                    topStart = 25.dp,
-//                                    topEnd = 25.dp
-//                                ),
-//                                color = MaterialTheme.colorScheme.secondaryContainer
-//                            ),
-//                        verticalArrangement = Arrangement.Top,
-//                        horizontalAlignment = Alignment.Start
-//                    ) {
-//                        Row(
-//                            modifier = Modifier
-//                                .fillMaxWidth(),
-//                            horizontalArrangement = Arrangement.SpaceBetween
-//                        ) {
-//                            if(it.UserInfo.userPic != null)
-//                                Image(
-//                                    modifier = Modifier
-//                                        .width(100.dp)
-//                                        .height(100.dp)
-//                                        .offset(25.dp, (-45).dp)
-//                                        .clip(shape = CircleShape),
-//                                    contentScale = ContentScale.Crop,
-//                                    bitmap = it.UserInfo.userPic!!,
-//                                    contentDescription = null
-//                                )
-//                            else
-//                                Image(
-//                                    modifier = Modifier
-//                                        .width(100.dp)
-//                                        .height(100.dp)
-//                                        .offset(25.dp, (-45).dp)
-//                                        .clip(shape = CircleShape),
-//                                    contentScale = ContentScale.Crop,
-//                                    painter = painterResource(id = R.drawable.man),
-//                                    contentDescription = null,
-//                                )
-//                            Column(
-//                                modifier = Modifier
-//                                    .fillMaxWidth()
-//                                    .padding(top = 20.dp)
-//                                ,
-//                                horizontalAlignment = Alignment.CenterHorizontally
-//                            ) {
-//                                Text(
-//                                    fontWeight = FontWeight.SemiBold,
-//                                    fontFamily = FontFamily.SansSerif,
-//                                    fontSize = 3.8.em,
-//                                    text = it.UserInfo.firstName+ " " + it.UserInfo.lastName
-//                                )
-//                                Row(
-//                                    horizontalArrangement = Arrangement.End,
-//                                ){
-//                                    Icon(imageVector = if(it.UserInfo.gender == "Male") Icons.Filled.Male else Icons.Filled.Female, contentDescription = null, modifier = Modifier.size(20.dp),tint = MaterialTheme.colorScheme.secondary)
-//                                    Text(text = it.UserInfo.gender.toString(), fontSize = 14.sp)
-//                                }
-//                            }
-//                        }
-//                        Column(
-//                            modifier = Modifier
-//                                .offset(0.dp,(-30.dp))
-//                        ) {
-//                            Row(
-//                                modifier = Modifier
-//                                    .padding(horizontal = 20.dp)
-//                                    .fillMaxWidth(),
-//                                horizontalArrangement = Arrangement.SpaceBetween
-//                            ) {
-//                                Text(
-//                                    fontWeight = FontWeight.SemiBold,
-//                                    fontFamily = FontFamily.SansSerif,
-//                                    fontSize = 3.4.em,
-//                                    text = "Pickup --- Destination"
-//                                )
-//                                Text(
-//                                    style = MaterialTheme.typography.bodySmall,
-//                                    text = it.distance +"km "+ it.duration
-//                                )
-//                            }
-//                            Row(
-//                                modifier = Modifier
-//                                    .padding(horizontal = 20.dp)
-//                                    .fillMaxWidth(),
-//                                horizontalArrangement = Arrangement.SpaceBetween
-//                            ) {
-//                                Text(
-//                                    fontWeight = FontWeight.SemiBold,
-//                                    fontFamily = FontFamily.SansSerif,
-//                                    fontSize = 3.4.em,
-//                                    text = "CurrentLocation --- Pickup"
-//                                )
-//                                Text(
-//                                    style = MaterialTheme.typography.bodySmall,
-//                                    text =  it.distanceFromDriver + "km " + it.durationFromDriver
-//                                )
-//                            }
-//                            Row(
-//                                modifier = Modifier
-//                                    .padding(horizontal = 20.dp)
-//                                    .fillMaxWidth(),
-//                                horizontalArrangement = Arrangement.SpaceBetween
-//                            ) {
-//                                Text(
-//                                    fontWeight = FontWeight.SemiBold,
-//                                    fontFamily = FontFamily.SansSerif,
-//                                    fontSize = 4.em,
-//                                    text = "Price"
-//                                )
-//                                Text(
-//                                    style = MaterialTheme.typography.bodySmall,
-//                                    text =  "${it.price} Rs"
-//                                )
-//                            }
-//                            Row(
-//                                modifier = Modifier
-//                                    .padding(top = 20.dp)
-//                                    .fillMaxWidth(),
-//                                horizontalArrangement = Arrangement.SpaceEvenly
-//                            ) {
-//                                ElevatedButton(onClick = {
-//                                    viewModel.onEvent(TripEvents.userRejected)
-//                                }) {
-//                                    Text(text = "Reject")
-//                                }
-//                                Button(onClick = {
-//                                    db.collection("ridesDetail").document(it.UserInfo.userUid!!)
-//                                        .update("request","accepted").addOnSuccessListener {
-//                                            Log.d("request","Accepted")
-//                                        }
-//                                    it.request = "accepted"
-//                                    viewModel.onEvent(TripEvents.userAccepted(it.UserInfo.userUid!!))
-//                                }) {
-//                                    Text(text = "Accept")
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
         }
     }
     when(state.currentScreen)

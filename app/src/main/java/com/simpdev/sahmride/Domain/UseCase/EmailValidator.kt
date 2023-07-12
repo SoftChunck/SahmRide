@@ -18,6 +18,5 @@ class EmailValidator {
             )
         }
         return ErrorMessage()
-
     }
 }

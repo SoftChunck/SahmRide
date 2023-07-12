@@ -178,13 +178,14 @@ fun SignInUI(mainScreenViewModel: MainScreenViewModel) {
             }),
             visualTransformation = if(state.viewPassword) VisualTransformation.None   else PasswordVisualTransformation() ,
             leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "User Icon", tint = MaterialTheme.colorScheme.background) },
-            trailingIcon = { if(state.viewPassword) Icon(
+            trailingIcon = {
+                if(state.viewPassword) Icon(
                 Icons.Filled.VisibilityOff,
                 contentDescription = " View Password ",
                 tint = MaterialTheme.colorScheme.background,
                 modifier = Modifier
                     .clickable(onClick = {   viewModel.onEvent(SigninEvents.viewPasswordChange)   }, enabled = true) )
-            else Icon(
+                else Icon(
                 Icons.Filled.Visibility,
                 contentDescription = " View Password ",
                 tint = MaterialTheme.colorScheme.background,
@@ -210,7 +211,8 @@ fun SignInUI(mainScreenViewModel: MainScreenViewModel) {
         }
         Spacer(modifier = Modifier
             .height(20.dp))
-        ElevatedButton(onClick = { viewModel.onEvent(SigninEvents.SigninClicked) },
+        ElevatedButton(
+            onClick = { viewModel.onEvent(SigninEvents.SigninClicked) },
             shape = MaterialTheme.shapes.large,
             enabled = !state.signingIn,
             modifier = Modifier
@@ -258,4 +260,3 @@ fun SignInUI(mainScreenViewModel: MainScreenViewModel) {
             .height(14.dp))
     }
 }
-

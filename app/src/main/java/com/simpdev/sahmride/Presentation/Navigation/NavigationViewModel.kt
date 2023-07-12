@@ -30,9 +30,7 @@ class NavigationViewModel:ViewModel() {
     init{
         startLocationBroadcastService()
         waitForResponse()
-        if(userData.isDriver){
-            listenForUsers()
-        }
+        listenForUsers()
     }
     var state by mutableStateOf(NavigationState())
 
@@ -238,11 +236,14 @@ class NavigationViewModel:ViewModel() {
         val ref = database.reference.child("driversLocation").child(auth.currentUser?.uid.toString()).child("users")
         ref.addValueEventListener(object  : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
+                Log.d("Userr",snapshot.toString())
                 snapshot.children.forEach {
+                    Log.d("Userr",it.key.toString())
                     if(it.key != null)
                     {
                         if(it.key.toString() != auth.currentUser!!.uid)
                         {
+                            Log.d("Userrr",it.key.toString())
                             keys.add(KeyStatus(key = it.key.toString(), status = it.value.toString()))
                             if(it.key == snapshot.children.last().key)
                             {
@@ -264,7 +265,7 @@ class NavigationViewModel:ViewModel() {
             keys.add(KeyStatus(key = "request"))
             db.collection("ridesDetail").document(it.uid).get().addOnSuccessListener {
                 val driverUid = it["driverUid"].toString()
-                state = state.copy(userUid = driverUid)
+                state = state.copy(userUid = it["driverUid"].toString())
                 val refMyLocation = database.reference.child("driversLocation").child(driverUid).child("users")
                 refMyLocation.get().addOnCompleteListener {
                     it.addOnSuccessListener {
@@ -376,7 +377,6 @@ class NavigationViewModel:ViewModel() {
                 keys.forEach { currentkey ->
                     val rideSharingUser:userInfo = userInfo( userUid = if(currentkey.key == "request") state.userUid else currentkey.key)
                     val refUserDetails = db.collection("users").document(rideSharingUser.userUid!!)
-
                     Log.d("Users Details",rideSharingUser.userUid.toString())
                     refUserDetails.get().addOnSuccessListener { result ->
                         if(result != null ){

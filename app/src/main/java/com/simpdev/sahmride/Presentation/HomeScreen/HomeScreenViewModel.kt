@@ -25,7 +25,7 @@ class HomeScreenViewModel: ViewModel() {
 
         val refActive = database.reference.child("driversLocation").child(auth.currentUser!!.uid).child("Active")
         refActive.get().addOnSuccessListener {
-            state = state.copy(active = if(it.value.toString() == "true") true else false)
+            state = state.copy(active = it.value.toString() == "true")
         }
 
         val refSeats = database.reference.child("driversLocation").child(auth.currentUser!!.uid).child("availableSeats")

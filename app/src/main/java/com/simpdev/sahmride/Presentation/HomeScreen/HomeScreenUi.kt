@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.AddLocation
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -94,7 +96,23 @@ fun HomeScreenUi(navController: NavController)
             .verticalScroll(enabled = true, state = rememberScrollState())
     ){
     // Check if location is enabled
-        Text("SahmRide",fontSize=7.em, fontWeight = FontWeight.SemiBold,modifier = Modifier.padding(horizontal = 15.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Text("SahmRide",fontSize=7.em, fontWeight = FontWeight.SemiBold,modifier = Modifier.padding(start = 15.dp))
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .padding(end = 15.dp)
+                    .clickable(
+                        enabled = true,
+                        onClick = { navController.navigate(NavigationEvent.ConfigurationScreen.route) })
+            ) {
+                Icon(imageVector = Icons.Filled.Settings, contentDescription = null)
+            }
+        }
         val images = listOf(
            R.drawable.slide,R.drawable.slidee,R.drawable.slideee
         )
@@ -136,7 +154,10 @@ fun HomeScreenUi(navController: NavController)
                             modifier = Modifier
                                 .size(60.dp)
                                 .padding(10.dp)
-                                .background(color = MaterialTheme.colorScheme.secondaryContainer,shape= CircleShape),
+                                .background(
+                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                    shape = CircleShape
+                                ),
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ){
@@ -144,7 +165,9 @@ fun HomeScreenUi(navController: NavController)
                         }
                         Column {
                             Text(text = "Turn on location services.", fontWeight = FontWeight.SemiBold)
-                            Text(text = "Please enable location for better experience.", fontWeight = FontWeight.Light,fontSize = 3.4.em, lineHeight = 1.em,modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 5.dp))
+                            Text(text = "Please enable location for better experience.", fontWeight = FontWeight.Light,fontSize = 3.4.em, lineHeight = 1.em,modifier = Modifier
+                                .fillMaxWidth(0.8f)
+                                .padding(vertical = 5.dp))
                             Button(onClick = {
                                 val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
                                 context!!.startActivity(intent)
@@ -214,87 +237,6 @@ fun HomeScreenUi(navController: NavController)
                 }
             }
         }
-//            Column(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(horizontal = 10.dp, vertical = 20.dp)
-//                    .background(
-//                        color = MaterialTheme.colorScheme.primaryContainer,
-//                        shape = RoundedCornerShape(20.dp)
-//                    ),
-//            ) {
-//                Row(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(horizontal = 10.dp, vertical = 20.dp),
-//                    horizontalArrangement = Arrangement.SpaceBetween,
-//                    verticalAlignment = Alignment.CenterVertically
-//                ){
-//                    Text(
-//                        text = "Active",
-//                        fontWeight = FontWeight.SemiBold,
-//                        fontSize = 20.sp
-//                    )
-//                    Switch(checked = state.active, onCheckedChange = {
-//                        viewModel.onEvent(HomeScreenEvents.activeChange)
-//                    })
-//                }
-//            }
-//        if(state.active)
-//
-//            Column(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(horizontal = 10.dp, vertical = 10.dp)
-//                    .background(
-//                        color = MaterialTheme.colorScheme.secondaryContainer,
-//                        shape = RoundedCornerShape(20.dp)
-//                    ),
-//            ) {
-//                Row(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(horizontal = 10.dp, vertical = 20.dp),
-//                    horizontalArrangement = Arrangement.SpaceBetween,
-//                    verticalAlignment = Alignment.CenterVertically
-//                ){
-//                    Text(
-//                        text = "Available Seats",
-//                        fontWeight = FontWeight.SemiBold,
-//                        fontSize = 20.sp
-//                    )
-//                    TextButton(onClick = {
-//                        viewModel.onEvent(HomeScreenEvents.expandMenuChange)
-//                    }) {
-//                        Text(text = state.availableSeats)
-//                    }
-//                    DropdownMenu(
-//                        expanded = state.expandMenu,
-//                        onDismissRequest = { },
-//                        offset = DpOffset(200.dp,(-40).dp)
-//                    ) {
-//                        DropdownMenuItem(
-//                            text = { Text("0") },
-//                            onClick = { viewModel.onEvent(HomeScreenEvents.availableSeatsChange("0")) })
-//                        DropdownMenuItem(
-//                            text = { Text("1") },
-//                            onClick = { viewModel.onEvent(HomeScreenEvents.availableSeatsChange("1"))  })
-//                        DropdownMenuItem(
-//                            text = { Text("2") },
-//                            onClick = {viewModel.onEvent(HomeScreenEvents.availableSeatsChange("2"))  })
-//                        DropdownMenuItem(
-//                            text = { Text("3") },
-//                            onClick = { viewModel.onEvent(HomeScreenEvents.availableSeatsChange("3"))  })
-//                        DropdownMenuItem(
-//                            text = { Text("4") },
-//                            onClick = { viewModel.onEvent(HomeScreenEvents.availableSeatsChange("4"))  })
-//                        DropdownMenuItem(
-//                            text = { Text("5") },
-//                            onClick = { viewModel.onEvent(HomeScreenEvents.availableSeatsChange("5"))  })
-//                    }
-//                }
-//            }
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -363,17 +305,6 @@ fun HomeScreenUi(navController: NavController)
     }
 }
 
-@Composable
-fun HomeUi(){
-    Column(
-        modifier = Modifier
-            .fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-//        ActiveWidget()
-        BookRideWidget()
-    }
-}
 @SuppressLint("UnrememberedMutableState")
 @Composable
 fun ActiveWidget(
@@ -436,7 +367,7 @@ fun ActiveWidget(
                     verticalAlignment = Alignment.CenterVertically,
                 ){
                     Column(
-                        modifier = Modifier.fillMaxHeight(),
+                        modifier = Modifier.height(150.dp),
                         verticalArrangement = Arrangement.SpaceEvenly,
                         horizontalAlignment = Alignment.Start
                     ){
@@ -449,7 +380,7 @@ fun ActiveWidget(
                                 )
                             ) {
                             }
-                            Text("Male")
+                            Text("Male",modifier = Modifier.padding(start = 4.dp))
                         }
                         Row{
                             Button(onClick = {}, modifier = Modifier
@@ -460,7 +391,7 @@ fun ActiveWidget(
                                 )
                             ) {
                             }
-                            Text("Female")
+                            Text("Female",modifier = Modifier.padding(start = 4.dp))
                         }
                         Row{
                             Button(onClick = {}, modifier = Modifier
@@ -471,115 +402,119 @@ fun ActiveWidget(
                                 )
                             ) {
                             }
-                            Text("Available Seats")
+                            Text("Available Seats",modifier = Modifier.padding(start = 4.dp))
                         }
                     }
-                    Column(
-                        modifier = Modifier
-                            .border(border = BorderStroke(1.dp,Color.Gray), shape = RoundedCornerShape(4.dp))
-                    ) {
-                        Row(){
-                            Button(onClick = {
-                                currentIndex = 0
-                                expandMenu = !expandMenu
-                            }, modifier = Modifier
-                                .size(50.dp)
-                                .padding(10.dp),
-                                shape = RoundedCornerShape(2.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if(seatsList[0] == "Avalible")
-                                                        MaterialTheme.colorScheme.tertiary
-                                                    else if(seatsList[0] == "Male")
-                                                        MaterialTheme.colorScheme.primary
-                                                    else
-                                                        MaterialTheme.colorScheme.secondary ),
-                            ) {
-                                Text("0",color = MaterialTheme.colorScheme.onPrimaryContainer)
-                            }
-                            Button(onClick = {
-                            }, modifier = Modifier
-                                .size(50.dp)
-                                .padding(10.dp),
-                                shape = RoundedCornerShape(2.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if(seatsList[1] == "Avalible")
-                                        MaterialTheme.colorScheme.tertiary
-                                    else if(seatsList[1] == "Male")
-                                        MaterialTheme.colorScheme.primary
-                                    else
-                                        MaterialTheme.colorScheme.secondary ),
-                            ) {
-                                Text("1",color = MaterialTheme.colorScheme.onPrimaryContainer)
-                            }
-                        }
-                        Row(){
-                            Button(onClick = {
-                                currentIndex = 2
-                                expandMenu = !expandMenu
-                            }, modifier = Modifier
-                                .size(50.dp)
-                                .padding(10.dp),
-                                shape = RoundedCornerShape(2.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if(seatsList[2] == "Avalible")
-                                        MaterialTheme.colorScheme.tertiary
-                                    else if(seatsList[2] == "Male")
-                                        MaterialTheme.colorScheme.primary
-                                    else
-                                        MaterialTheme.colorScheme.secondary ),
-                            ) {
-                                Text("2",color = MaterialTheme.colorScheme.onPrimaryContainer)
-                            }
-                            Button(onClick = {
-                                currentIndex = 3
-                                expandMenu = !expandMenu
-                            }, modifier = Modifier
-                                .size(50.dp)
-                                .padding(10.dp),
-                                shape = RoundedCornerShape(2.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor =if(seatsList[3] == "Avalible")
-                                        MaterialTheme.colorScheme.tertiary
-                                    else if(seatsList[3] == "Male")
-                                        MaterialTheme.colorScheme.primary
-                                    else
-                                        MaterialTheme.colorScheme.secondary ),
-                            ) {
-                                Text("3",color = MaterialTheme.colorScheme.onPrimaryContainer)
-                            }
-                        }
-                        DropdownMenu(
-                            expanded = expandMenu,
-                            onDismissRequest = { },
-//                            offset = DpOffset(200.dp,(-40).dp)
+                    Column(){
+                        Image(painter = painterResource(id = R.drawable.seats), contentDescription = null,modifier = Modifier.height(290.dp))
+                        Column(
+                            modifier = Modifier
+                                .zIndex(99f)
+                                .offset(47.dp,(-175).dp)
                         ) {
-                            DropdownMenuItem(
-                                text = { Text("Male") },
-                                onClick = {
-                                    seatsList[currentIndex] = "Male"
-                                    expandMenu = false
-                                    seatsList.forEachIndexed { index, value ->
-                                        database.reference.child("driversLocation").child(auth.currentUser!!.uid).child("seatsDetail").child(index.toString()).setValue(value)
-                                    }
-                                })
-                            DropdownMenuItem(
-                                text = { Text("Female") },
-                                onClick = {
-                                    seatsList[currentIndex] = "Female"
-                                    expandMenu = false
-                                    seatsList.forEachIndexed { index, value ->
-                                        database.reference.child("driversLocation").child(auth.currentUser!!.uid).child("seatsDetail").child(index.toString()).setValue(value)
-                                    }
-                                })
-                            DropdownMenuItem(
-                                text = { Text("Avalible") },
-                                onClick = {
-                                    seatsList[currentIndex] = "Avalible"
-                                    expandMenu = false
-                                    seatsList.forEachIndexed { index, value ->
-                                        database.reference.child("driversLocation").child(auth.currentUser!!.uid).child("seatsDetail").child(index.toString()).setValue(value)
-                                    }
-                                })
+                            Row(){
+                                Button(onClick = {
+                                }, modifier = Modifier
+                                    .size(40.dp)
+                                    .padding( 10.dp),
+                                    shape = RoundedCornerShape(2.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if(seatsList[1] == "Avalible")
+                                            MaterialTheme.colorScheme.tertiary
+                                        else if(seatsList[1] == "Male")
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.secondary ),
+                                ) {
+                                    Text("1",color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                }
+                                Button(onClick = {
+                                    currentIndex = 0
+                                    expandMenu = !expandMenu
+                                }, modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(10.dp),
+                                    shape = RoundedCornerShape(2.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if(seatsList[0] == "Avalible")
+                                            MaterialTheme.colorScheme.tertiary
+                                        else if(seatsList[0] == "Male")
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.secondary ),
+                                ) {
+                                    Text("0",color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                }
+                            }
+                            Row(modifier = Modifier.padding(top = 10.dp)){
+                                Button(onClick = {
+                                    currentIndex = 2
+                                    expandMenu = !expandMenu
+                                }, modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(10.dp),
+                                    shape = RoundedCornerShape(2.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if(seatsList[2] == "Avalible")
+                                            MaterialTheme.colorScheme.tertiary
+                                        else if(seatsList[2] == "Male")
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.secondary ),
+                                ) {
+                                    Text("2",color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                }
+                                Button(onClick = {
+                                    currentIndex = 3
+                                    expandMenu = !expandMenu
+                                }, modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(10.dp),
+                                    shape = RoundedCornerShape(2.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor =if(seatsList[3] == "Avalible")
+                                            MaterialTheme.colorScheme.tertiary
+                                        else if(seatsList[3] == "Male")
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.secondary ),
+                                ) {
+                                    Text("3",color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                }
+                            }
+                            DropdownMenu(
+                                expanded = expandMenu,
+                                onDismissRequest = { },
+//                            offset = DpOffset(200.dp,(-40).dp)
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Male") },
+                                    onClick = {
+                                        seatsList[currentIndex] = "Male"
+                                        expandMenu = false
+                                        seatsList.forEachIndexed { index, value ->
+                                            database.reference.child("driversLocation").child(auth.currentUser!!.uid).child("seatsDetail").child(index.toString()).setValue(value)
+                                        }
+                                    })
+                                DropdownMenuItem(
+                                    text = { Text("Female") },
+                                    onClick = {
+                                        seatsList[currentIndex] = "Female"
+                                        expandMenu = false
+                                        seatsList.forEachIndexed { index, value ->
+                                            database.reference.child("driversLocation").child(auth.currentUser!!.uid).child("seatsDetail").child(index.toString()).setValue(value)
+                                        }
+                                    })
+                                DropdownMenuItem(
+                                    text = { Text("Avalible") },
+                                    onClick = {
+                                        seatsList[currentIndex] = "Avalible"
+                                        expandMenu = false
+                                        seatsList.forEachIndexed { index, value ->
+                                            database.reference.child("driversLocation").child(auth.currentUser!!.uid).child("seatsDetail").child(index.toString()).setValue(value)
+                                        }
+                                    })
+                            }
                         }
                     }
                 }
@@ -589,208 +524,6 @@ fun ActiveWidget(
     }
 }
 
-@SuppressLint("UnrememberedMutableState")
-@Composable
-fun ActiveWidgetT(
-){
-    var expandMenu by remember { mutableStateOf(false) }
-    var seatsList = remember {
-        listOf("Avalible","Avalible","Avalible","Avalible").toMutableStateList()
-    }
-    var currentIndex by remember { mutableStateOf(0) }
-    Column(
-        modifier = Modifier
-            .padding(10.dp)
-            .border(border = BorderStroke(1.dp, Color.Gray), shape = RoundedCornerShape(4.dp))
-            .background(
-                color = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(4.dp)
-            )
-            .fillMaxWidth()
-    ) {
-        Row(modifier = Modifier
-            .padding(10.dp)
-            .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ){
-            Text(text = "Active", fontSize = 5.em, fontWeight = FontWeight.SemiBold)
-            Switch(checked = true, onCheckedChange = {})
-        }
-        Row(modifier = Modifier
-            .padding(15.dp)
-            .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ){
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(end = 20.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ){
-                    Button(onClick = {}, modifier = Modifier
-                        .size(20.dp),
-                        shape = RoundedCornerShape(2.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                    }
-                    Text("Male")
-                    Button(onClick = {}, modifier = Modifier
-                        .size(20.dp),
-                        shape = RoundedCornerShape(2.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.secondary
-                        )
-                    ) {
-                    }
-                    Text("Female")
-                    Button(onClick = {}, modifier = Modifier
-                        .size(20.dp),
-                        shape = RoundedCornerShape(2.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.tertiary
-                        )
-                    ) {
-                    }
-                    Text("Available Seats")
-                }
-                Row(
-                    modifier = Modifier
-                        .padding(top = 10.dp)
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically,
-                ){
-                    Image(
-                        painter = painterResource(id = when(4){
-                            1 -> R.drawable.icon1
-                            2 -> R.drawable.icon2
-                            3 -> R.drawable.icon3
-                            4 -> R.drawable.icon4
-                            5 -> R.drawable.icon5
-                            6 -> R.drawable.icon6
-                            else -> {
-                                R.drawable.icon6}
-                        }),
-                        modifier = Modifier
-                            .width(100.dp)
-                            .height(100.dp)
-                            .border(
-                                border = BorderStroke(1.dp, Color.Gray),
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                        ,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = ""
-                    )
-                    Column(
-                        modifier = Modifier
-                            .border(border = BorderStroke(1.dp,Color.Gray), shape = RoundedCornerShape(4.dp))
-                    ) {
-                        Row(){
-                            Button(onClick = {
-                                currentIndex = 0
-                                expandMenu = true
-                            }, modifier = Modifier
-                                .size(50.dp)
-                                .padding(10.dp),
-                                shape = RoundedCornerShape(2.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if(seatsList[0] == "Avalible")
-                                        MaterialTheme.colorScheme.tertiary
-                                    else if(seatsList[0] == "Male")
-                                        MaterialTheme.colorScheme.primary
-                                    else
-                                        MaterialTheme.colorScheme.secondary ),
-                            ) {
-                                Text("0",color = MaterialTheme.colorScheme.onPrimaryContainer)
-                            }
-                            Button(onClick = {
-                                currentIndex = 1
-                                expandMenu = true
-                            }, modifier = Modifier
-                                .size(50.dp)
-                                .padding(10.dp),
-                                shape = RoundedCornerShape(2.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if(seatsList[1] == "Avalible")
-                                        MaterialTheme.colorScheme.tertiary
-                                    else if(seatsList[1] == "Male")
-                                        MaterialTheme.colorScheme.primary
-                                    else
-                                        MaterialTheme.colorScheme.secondary ),
-                            ) {
-                                Text("1",color = MaterialTheme.colorScheme.onPrimaryContainer)
-                            }
-                        }
-                        Row(){
-                            Button(onClick = {
-                                currentIndex = 2
-                                expandMenu = true
-                            }, modifier = Modifier
-                                .size(50.dp)
-                                .padding(10.dp),
-                                shape = RoundedCornerShape(2.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if(seatsList[2] == "Avalible")
-                                        MaterialTheme.colorScheme.tertiary
-                                    else if(seatsList[2] == "Male")
-                                        MaterialTheme.colorScheme.primary
-                                    else
-                                        MaterialTheme.colorScheme.secondary ),
-                            ) {
-                                Text("2",color = MaterialTheme.colorScheme.onPrimaryContainer)
-                            }
-                            Button(onClick = {
-                                currentIndex = 3
-                                expandMenu = true
-                            }, modifier = Modifier
-                                .size(50.dp)
-                                .padding(10.dp),
-                                shape = RoundedCornerShape(2.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor =if(seatsList[3] == "Avalible")
-                                        MaterialTheme.colorScheme.tertiary
-                                    else if(seatsList[3] == "Male")
-                                        MaterialTheme.colorScheme.primary
-                                    else
-                                        MaterialTheme.colorScheme.secondary ),
-                            ) {
-                                Text("3",color = MaterialTheme.colorScheme.onPrimaryContainer)
-                            }
-                        }
-                        DropdownMenu(
-                            expanded = expandMenu,
-                            onDismissRequest = { },
-//                            offset = DpOffset(200.dp,(-40).dp)
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Male") },
-                                onClick = {
-                                    seatsList[currentIndex] = "Male"
-                                    expandMenu = false
-                                })
-                            DropdownMenuItem(
-                                text = { Text("Female") },
-                                onClick = {
-                                    seatsList[currentIndex] = "Female"
-                                    expandMenu = false
-                                })
-                        }
-                    }
-                }
-            }
-        }
-
-    }
-}
 @Composable
 fun Tools(navController: NavController) {
     Row (
@@ -837,7 +570,8 @@ fun Tools(navController: NavController) {
         verticalAlignment = Alignment.CenterVertically
     ){
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.clickable(enabled = true, onClick = {navController.navigate(NavigationEvent.ProfileScreen.route)})
         ) {
             Image(painter = painterResource(id = R.drawable.user), contentDescription = null,modifier = Modifier.size(32.dp))
             Text(text = "Profile", fontSize =  2.8.em)
@@ -849,6 +583,7 @@ fun Tools(navController: NavController) {
             Image(painter = painterResource(id = R.drawable.settings), contentDescription = null,modifier = Modifier.size(32.dp))
             Text(text = "Settings", fontSize =  2.8.em)
         }
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

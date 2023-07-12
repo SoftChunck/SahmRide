@@ -7,7 +7,6 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Environment
 import android.util.Log
-import androidx.compose.ui.graphics.asImageBitmap
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.ktx.database
 import com.google.firebase.firestore.ktx.firestore
@@ -125,22 +124,21 @@ fun saveUserDataToFile(firstName:String,lastName:String,email:String,gender:Stri
 
     val root = Environment.getExternalStorageDirectory()
     val file = File(root.absolutePath + "/SahmRide/Profile/profile.jpg")
-    try {
-        file.createNewFile()
-
-        val storageReference = storageRef.child("images/${auth.currentUser!!.uid}/profile")
-        storageReference.getFile(file).addOnSuccessListener {
-            val inputStream = context?.contentResolver?.openInputStream(
-                Uri.fromFile(
-                    File(file.path)
-                ))
-            userData.profilePicBitmap = BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
-        }.addOnFailureListener {
-            Log.d("jpeg","File Failed")
-        }
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
+//    try {
+//        file.createNewFile()
+//        val storageReference = storageRef.child("images/${auth.currentUser!!.uid}/profile")
+//        storageReference.getFile(file).addOnSuccessListener {
+//            val inputStream = context?.contentResolver?.openInputStream(
+//                Uri.fromFile(
+//                    File(file.path)
+//                ))
+//            userData.profilePicBitmap = BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
+//        }.addOnFailureListener {
+//            Log.d("jpeg","File Failed")
+//        }
+//    } catch (e: Exception) {
+//        e.printStackTrace()
+//    }
 }
 //fun updateActiveStatus(active:Boolean){
 //    val sharedPreference = context?.getSharedPreferences("userData",Context.MODE_PRIVATE)

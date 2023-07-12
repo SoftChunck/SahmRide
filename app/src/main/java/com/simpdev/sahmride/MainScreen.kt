@@ -12,18 +12,38 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.ExperimentalUnitApi
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.simpdev.sahmride.Domain.Data.mapStyle
 import com.simpdev.sahmride.Presentation.ForgotPassword.ForgotPasswordUI
@@ -95,7 +115,7 @@ class MainScreen : ComponentActivity() {
             appContext = applicationContext,
         )
         chatClient =
-            ChatClient.Builder("279npgbbez43", applicationContext).withPlugin(offlinePluginFactory)
+            ChatClient.Builder("z2r8ukcuazvc", applicationContext).withPlugin(offlinePluginFactory)
                 .build()
 
         if (!locationAccessGranted) {
@@ -160,6 +180,7 @@ class MainScreen : ComponentActivity() {
 
                         is CurrentScreen.HomeScreen -> {
                             Navigation(LocalContext.current)
+//                            abc()
                         }
                     }
                 }
@@ -168,3 +189,26 @@ class MainScreen : ComponentActivity() {
     }
 }
 
+@Composable
+fun abc(){
+    Column(
+        modifier = Modifier
+            .background(color = Color.Blue, shape = RoundedCornerShape(4.dp))
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+
+    ) {
+        ElevatedButton(onClick = { /*TODO*/ }, modifier = Modifier.width(100.dp)) {
+            Text(text = "Hi", fontSize =20.em)
+        }
+        ElevatedButton(onClick = { /*TODO*/ },modifier = Modifier.width(100.dp)) {
+                Text(text = "Hi")
+
+        }
+        Divider(modifier =Modifier.fillMaxWidth(0.5f))
+        Text(text = "Hi there ", fontSize = 10.em, fontFamily = FontFamily.Serif, color = Color.White)
+        Icon(imageVector = Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(100.dp), tint = Color.White)
+        Image(painter = painterResource(id = R.drawable.seats), contentDescription = null)
+    }
+}
