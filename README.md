@@ -9,10 +9,6 @@ Welcome to SahmRide! This Android application is built using Jetpack Compose, Ko
 - **Mapbox**: Integrates Mapbox SDK to provide interactive maps, location tracking, and navigation features.
 - **StreamChat**: Implements StreamChat SDK for real-time chat functionality, enabling users to communicate seamlessly within the app.
 
-## Screenshots
-
-![Screenshot 1](/screenshots/screenshot1.png)
-![Screenshot 2](/screenshots/screenshot2.png)
 
 ## Prerequisites
 
@@ -24,8 +20,7 @@ To run SahmRide locally, make sure you have the following prerequisites installe
 - StreamChat API credentials. Sign up for an account on StreamChat (https://getstream.io/chat/) and obtain your API keys.
 
 ## Getting Started
-
-1. Clone this repository to your local machine:
+Clone this repository to your local machine:
 
 ```bash
-git clone https://github.com/your-username/sahm-ride.git
+git clone https://github.com/SoftChunck/SahmRide.git
